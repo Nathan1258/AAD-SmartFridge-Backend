@@ -13,7 +13,7 @@ const query = (sql, params) => {
         pool.getConnection((err, conn) => {
             if (err) return reject(err);
 
-            conn.query(sql, params, (err, results, fields) => {
+            conn.query(sql, params, (err, results) => {
                 conn.release();
                 if (err) return reject(err);
                 resolve(results);
