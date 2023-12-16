@@ -14,4 +14,6 @@ app.get("/test", (req,res) => {
 });
 
 
-app.listen(5005);
+app.listen(5005, () =>{
+   console.log("Server listening");
+});
