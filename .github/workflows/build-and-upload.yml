@@ -27,9 +27,9 @@ jobs:
           file: ./Dockerfile
           builder: ${{ steps.buildx.outputs.name }}
           push: true
-          tags: 'registry.ellisn.cloud/cloud-centric-ui:latest'
-          cache-from: 'type=registry,ref=registry.ellisn.cloud/cloud-centric-ui:buildcache'
-          cache-to: 'type=registry,ref=registry.ellisn.cloud/cloud-centric-ui:buildcache,mode=max'
+          tags: 'registry.ellisn.cloud/${{ github.event.repository.name }}'
+          cache-from: 'type=registry,ref=registry.ellisn.cloud/${{ github.event.repository.name }}:buildcache'
+          cache-to: 'type=registry,ref=registry.ellisn.cloud/${{ github.event.repository.name }}:buildcache,mode=max'
       - name: Notify my phone on success
         if: success()
         uses: nathan1258/cloudNotify-action@master
