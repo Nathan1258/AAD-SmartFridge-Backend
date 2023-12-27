@@ -1,0 +1,50 @@
+name: Build Image and Upload to Argon Server
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to private registry
+        uses: docker/login-action@v1
+        with:
+  #        registry: ${{ secrets.REGISTRY_URL }}
+          registry: 'registry.ellisn.cloud'
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./
+          file: ./Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          push: true
+          tags: 'registry.ellisn.cloud/${{ github.event.repository.name }}'
+          cache-from: 'type=registry,ref=registry.ellisn.cloud/${{ github.event.repository.name }}:buildcache'
+          cache-to: 'type=registry,ref=registry.ellisn.cloud/${{ github.event.repository.name }}:buildcache,mode=max'
+      - name: Notify my phone on success
+        if: success()
+        uses: nathan1258/cloudNotify-action@master
+        env:
+          TOKEN: ${{ secrets.CLOUD_NOTIFY_API_TOKEN }}
+          USERID: ${{ secrets.CLOUD_NOTIFY_USERID_KEY }}
+          TITLE: "${{ github.event.repository.name }} completed 🎉"
+          MESSAGE: "${{ github.event.repository.name }} has been built and uploaded to Argon"
+          LINK: "${{ github.server_url }}"
+      - name: Notify my phone on failure
+        if: failure()
+        uses: nathan1258/cloudNotify-action@master
+        env:
+          TOKEN: ${{ secrets.CLOUD_NOTIFY_API_TOKEN }}
+          USERID: ${{ secrets.CLOUD_NOTIFY_USERID_KEY }}
+          TITLE: "${{ github.event.repository.name }} failed 😞"
+          MESSAGE: "There was an error building ${{ github.event.repository.name }}. Check the workflow logs for details."
+          LINK: "${{ github.server_url }}"
