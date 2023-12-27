@@ -1,10 +1,16 @@
 const express = require("express");
 const app = express();
-
 app.use(express.json());
 
-app.get("/test", (req,res) => {
-   res.send("yay");
+const authRoute = require('./auth.js');
+const reportsRoute = require("./reports");
+
+app.use("/v1/users", authRoute);
+app.use("/v1/reports", reportsRoute);
+
+
+app.get("/", (req,res) => {
+   res.send("<h1>Advanced Analysis and Design API server</h1>");
 });
 
 
