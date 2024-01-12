@@ -12,8 +12,6 @@ const generateUniqueUserID = async () => {
 
         try {
             const result = await query(sql, params);
-            console.log(result);
-            console.log(result[0])
             if (result[0].count === 0) {
                 uniqueUserID = randomUserID;
                 break;
