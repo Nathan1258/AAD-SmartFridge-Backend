@@ -32,8 +32,11 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
 
 - **Endpoint:** `/v1/users/change-user-access`
   - **Method:** PUT
-  - **Description:** Test route for changing user access.
+  - **Description:** Change a user's access
   - **Permissions:** Requires admin privileges.
+  - **Paramters:**
+    - *accessValue*:**integer**
+    - *userIDToChange*:**string**
 
 ### Reports
 
