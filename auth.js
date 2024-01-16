@@ -19,6 +19,15 @@ router.post("/register", async (req,res) => {
 });
 
 router.put("/change-user-access", verifyAdmin, (req,res) => {
+    const newUserAccess = req.body.accessValue;
+    const validAccessValues = [0,1,2]
+
+    if(!newUserAccess) return res.status(400).json({code: 400, message: "'accessValue' parameter is missing from request body", data: null})
+    if(!validAccessValues.includes(newUserAccess)) return res.status(400).json({code: 400, message: "Invalid 'accessValue' parameter. Valid values are: 0 (normal user), 1 (admin), 2 (health officer)", data: null})
+
+
+
+
     return res.send("testing permissions");
 });
 

@@ -5,7 +5,7 @@ async function verifyAdmin (req,res,next) {
     const uid = req.body.uid;
 
     // uid is not in the request body, send error message back to client
-    if(!uid) return res.json({"code": 401, "message": "'uid' is missing from request body", "data": null});
+    if(!uid) return res.json({"code": 401, "message": "'uid' parameter is missing from request body", "data": null});
 
     // Check if the user has correct permissions to perform action
     if(!isUserAdmin(uid)) return res.json({"code": 403, "message": "You do not have the required permissions to access this resource", "data": null});
@@ -20,7 +20,7 @@ async function verifyHealth (req,res,next) {
     const uid = req.body.uid;
 
     // uid is not in the request body, send error message back to client
-    if(!uid) return res.json({"code": 401, "message": "'uid' is missing from request body", "data": null});
+    if(!uid) return res.json({"code": 401, "message": "'uid' parameter is missing from request body", "data": null});
 
     // Check if the user has correct permissions to perform action
     if(!isUserHealth(uid)) return res.json({"code": 403, "message": "You do not have the required permissions to access this resource", "data": null});
@@ -35,7 +35,7 @@ async function verify(req,res,next) {
     const uid = req.body.uid;
 
     // uid is not in the request body, send error message back to client
-    if(!uid) return res.json({"code": 401, "message": "'uid' is missing from request body", "data": null});
+    if(!uid) return res.json({"code": 401, "message": "'uid' parameter is missing from request body", "data": null});
 
     // Do more validation, call 'next()' if user is valid to continue processing request.
     if(true) next();
