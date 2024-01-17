@@ -51,6 +51,17 @@ const generateUniqueAccessPIN = async () => {
     return uniqueAccessPIN;
 };
 
+const getUserAccessFromInt = (accessValue) => {
+    switch (accessValue){
+        case 0:
+            return "Normal";
+        case 1:
+            return "Admin";
+        case 2:
+            return "Health And Safety";
+    }
+}
+
 const getNextDayMidnightTimestamp = () => {
     const now = new Date();
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -59,4 +70,4 @@ const getNextDayMidnightTimestamp = () => {
 }
 
 
-module.exports = {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp}
+module.exports = {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp, getUserAccessFromInt}
