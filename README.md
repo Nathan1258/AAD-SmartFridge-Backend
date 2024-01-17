@@ -32,8 +32,7 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
 
 - **Endpoint:** `/v1/users/clock-in`
   - **Method:** POST
-  - **Description:** Clock a user in for the day. Returns a 4 digit PIN they can use to access the web app.
-  - **Permissions:** N/A
+  - **Description:** Clock a user in for the day. Returns a 4 digit PIN they can use to access the web app for that day's shift.
   - **Parameters:**
     - *uid*: **int**
     - *password*: **string**
