@@ -64,7 +64,7 @@ const getUserAccessFromInt = (accessValue) => {
 
 const addToActivityLog = async(req, actionHappened) => {
     try {
-        const queryString = "INSERT INTO AAD.activity (uid, action) values (?, ?)";
+        const queryString = "INSERT INTO ADA.activity (uid, action) values (?, ?)";
         const params = [req.body.user.uid, actionHappened];
         const result = await query(queryString, params);
         return result.affectedRows > 0;
