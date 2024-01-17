@@ -30,13 +30,22 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
 
 ### User Authentication
 
+- **Endpoint:** `/v1/users/clock-in`
+  - **Method:** POST
+  - **Description:** Clock a user in for the day. Returns a 4 digit PIN they can use to access the web app.
+  - **Permissions:** N/A
+  - **Parameters:**
+    - *uid*: **int**
+    - *password*: **string**
+
 - **Endpoint:** `/v1/users/change-user-access`
   - **Method:** PUT
   - **Description:** Change a user's access
   - **Permissions:** Requires admin privileges.
-  - **Paramters:**
-    - *accessValue*:**integer**
-    - *userIDToChange*:**string**
+  - **Parameters:**
+    - *accessCode*: **string**
+    - *accessValue*: **integer**
+    - *userIDToChange*: **string**
 
 ### Reports
 
