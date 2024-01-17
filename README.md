@@ -25,19 +25,28 @@ To run the server, make sure you have Node.js installed. Then, follow these step
    ```
 The server will now be available at `http://localhost:5021/`. Alternatively just use the production endpoint [here](https://aad-api.ellisn.com)
 
-
 ## Endpoints
 
 ### User Authentication
 
-- **Endpoint:** `/v1/users/clock-in`
+- **Register a User:** `/v1/users/register`
+  - **Method:** POST
+  - **Description:** Register a new user. Default *access* is **Normal** unless specified.
+  - **Parameters:**
+    - *first_name*: **string**
+    - *last_name*: **string**
+    - (Optional) *access*: **string**
+    - *password*: **string**
+    
+
+- **Clock in a user:** `/v1/users/clock-in`
   - **Method:** POST
   - **Description:** Clock a user in for the day. Returns a 4 digit PIN they can use to access the web app for that day's shift.
   - **Parameters:**
     - *uid*: **int**
     - *password*: **string**
 
-- **Endpoint:** `/v1/users/change-user-access`
+- **Change a user's access:** `/v1/users/change-user-access`
   - **Method:** PUT
   - **Description:** Change a user's access
   - **Permissions:** Requires admin privileges.
@@ -48,12 +57,12 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
 
 ### Reports
 
-- **Endpoint:** `/v1/reports/generate`
+- **Generate a report:** `/v1/reports/generate`
   - **Method:** GET
   - **Description:** Generate a report.
   - **Permissions:** Requires health and safety privileges.
 
-- **Endpoint:** `/v1/reports/log-action`
+- **Log an action:** `/v1/reports/log-action`
   - **Method:** POST
   - **Description:** Logs an action to the activity log. If *uid* is not present then the current user performing the request will be used.
   - **Parameters:**
