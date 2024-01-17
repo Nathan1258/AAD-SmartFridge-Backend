@@ -1,6 +1,6 @@
 const router = require("express").Router();
-const {verify, verifyAdmin, verifyHealth} = require("./verify");
-const {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp, getUserAccessFromInt} = require("./Utils");
+const {verifyAdmin} = require("./verify");
+const {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp} = require("./Utils");
 const {query} = require("./sql");
 const {InternalServerErrorResponse, OKResponse, NotAuthorisedResponse, MalformedBodyResponse} = require("./customResponses");
 

@@ -42,9 +42,9 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
   - **Description:** Change a user's access
   - **Permissions:** Requires admin privileges.
   - **Parameters:**
-    - *accessCode*: **string**
-    - *accessValue*: **integer**
-    - *userIDToChange*: **string**
+    - *accessPIN*: **integer**
+    - *uid*: **string**
+    - *newAccessValue*: **integer**
 
 ### Reports
 

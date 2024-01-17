@@ -20,11 +20,6 @@ app.get("/", (req,res) => {
    res.send("<h1>Advanced Analysis and Design API server</h1>");
 });
 
-app.get("/test", (req,res) => {
-   res.send("<h1>Test</h1>");
-});
-
-
 app.listen(5021, () =>{
    console.log("Server listening");
 });

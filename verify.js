@@ -5,7 +5,7 @@ const {NotAuthorisedResponse, InternalServerErrorResponse} = require("./customRe
 async function verifyAdmin (req, res, next) {
     try{
         const tokenResponse = await checkToken(req, res);
-        if(tokenResponse.code != 200) return res.status(tokenResponse.code).json(tokenResponse);
+        if(tokenResponse.code !== 200) return res.status(tokenResponse.code).json(tokenResponse);
         if(!await isUserAdmin(req)) return NotAuthorisedResponse(res, "You do not have the right permissions to access this. Contact your admin.");
         next()
     }catch(e){
@@ -18,7 +18,7 @@ async function verifyAdmin (req, res, next) {
 async function verifyHealth (req,res,next) {
      try{
         const tokenResponse = await checkToken(req, res);
-        if(tokenResponse.code != 200) return res.status(tokenResponse.code).json(tokenResponse);
+        if(tokenResponse.code !== 200) return res.status(tokenResponse.code).json(tokenResponse);
         if(!await isUserHealth(req)) return NotAuthorisedResponse(res, "You do not have the right permissions to access this. Contact your admin.");
         next()
     }catch(e){
@@ -31,7 +31,7 @@ async function verifyHealth (req,res,next) {
 async function verify(req,res,next) {
     try{
         const tokenResponse = await checkToken(req, res);
-        if(tokenResponse.code != 200) return res.status(tokenResponse.code).json(tokenResponse);
+        if(tokenResponse.code !== 200) return res.status(tokenResponse.code).json(tokenResponse);
         next()
     }catch(e){
         console.error("Error verifying user: ", e);
