@@ -3,20 +3,29 @@ const {verifyAdmin} = require("./verify");
 const {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp} = require("./Utils");
 const {query} = require("./sql");
 const {InternalServerErrorResponse, OKResponse, NotAuthorisedResponse, MalformedBodyResponse} = require("./customResponses");
+const {encryptPassword, comparePassword} = require("./secure");
 
 
 router.post("/register", async (req,res) => {
-    const first_name = req.body.first_name;
-    const last_name = req.body.last_name;
-    const email = req.body.email;
-    const access = req.body.access;
-    const password = req.body.password;
+    const {first_name, last_name, access } = req.body;
+    const encryptedPassword = await encryptPassword(req.body.password);
 
     try{
-        const userID = await generateUniqueUserID();
-        return OKResponse(res, "User successfully created", {"userID": userID})
+        let queryString;
+        let params;
+        if (!access) {
+            queryString = "INSERT INTO ADA.users (first_name, last_name, password) values (?, ?, ?)";
+            params = [first_name, last_name, encryptedPassword];
+        } else {
+            queryString = "INSERT INTO ADA.users (first_name, last_name, access, password) values (?, ?, ?, ?)";
+            params = [first_name, last_name, access, encryptedPassword];
+        }
+        const result = await query(queryString, params);
+        if(result.affectedRows <= 0) return InternalServerErrorResponse(res, "Unable to create user. Please try again.");
+        return OKResponse(res, "User successfully created", {"first_name": first_name, "last_name": last_name});
     }catch(e){
-        console.error("Error at /register: ", e);
+        console.error("Error registering a user: ", e);
+        return InternalServerErrorResponse(res, "Unable to create user. Please try again.");
     }
 });
 
@@ -32,9 +41,10 @@ router.post("/clock-in", async (req,res) => {
     try {
         const result = await query(queryString, parameters);
         const passwordDB = result[0].password;
-        if(password !== passwordDB) return NotAuthorisedResponse(res, "Password is invalid");
+        if(!await comparePassword(password, passwordDB)) return NotAuthorisedResponse(res, "Password is invalid");
         const response = await createSession(uid);
-        return res.status(response.code).json(response);
+        if(response != null) return OKResponse(res, "User clocked in successfully", {"accessPIN": response});
+        return InternalServerErrorResponse(res, "Unable to clock user in. Try again later.");
     } catch (error) {
         console.error("Error creating session:", error);
         return InternalServerErrorResponse(res, "Could not clock user in. Try again later.");
@@ -54,7 +64,6 @@ router.put("/change-user-access", verifyAdmin, async (req,res) => {
     const params = [newUserAccess, uid];
     try{
         const result = await query(queryString, params);
-        console.log(result);
         if(result <= 0) return InternalServerErrorResponse(res, "Unable to update user's access. Please try again.");
         return OKResponse(res, "User's access has been successfully updated", {"uid": uid, "New access": newUserAccess});
     }catch(e){
@@ -66,6 +75,7 @@ router.put("/change-user-access", verifyAdmin, async (req,res) => {
 
 async function createSession(uid) {
      try {
+        await deleteSession(uid);
         const accessPIN = await generateUniqueAccessPIN();
         const expiresAt = getNextDayMidnightTimestamp();
 
@@ -74,13 +84,25 @@ async function createSession(uid) {
         const result = await query(queryString, params);
 
         if (result.affectedRows && result.affectedRows > 0) {
-            return OKResponse(res, "User clocked in successfully.", {"accessPIN": accessPIN})
+            return accessPIN;
         } else {
-            return InternalServerErrorResponse(res, "Could not clock user in. Try again later.");
+            return null;
         }
     } catch (error) {
         console.error("Error creating session:", error);
-        return InternalServerErrorResponse(res, "Could not clock user in. Try again later.");
+        return null;
+    }
+}
+
+async function deleteSession(uid) {
+     try {
+
+        const queryString = "DELETE FROM ADA.sessions WHERE uid = ?";
+        const params = [uid];
+        await query(queryString, params);
+    } catch (error) {
+        console.error("Error creating session:", error);
+        return false;
     }
 }
 
