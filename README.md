@@ -53,6 +53,13 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
   - **Description:** Generate a report.
   - **Permissions:** Requires health and safety privileges.
 
+- **Endpoint:** `/v1/reports/log-action`
+  - **Method:** POST
+  - **Description:** Logs an action to the activity log. If *uid* is not present then the current user performing the request will be used.
+  - **Parameters:**
+    - (Optional) *uid*: **int**
+    - *action*: **string**
+
 ## User Verification Functions
 
 In the `verify.js` file, you'll find functions for verifying user permissions:

@@ -62,6 +62,18 @@ const getUserAccessFromInt = (accessValue) => {
     }
 }
 
+const addToActivityLog = async(req, actionHappened) => {
+    try {
+        const queryString = "INSERT INTO AAD.activity (uid, action) values (?, ?)";
+        const params = [req.body.user.uid, actionHappened];
+        const result = await query(queryString, params);
+        return result.affectedRows > 0;
+    }catch (e) {
+        console.log("Error adding to activity: ", e);
+        return false;
+    }
+};
+
 const getNextDayMidnightTimestamp = () => {
     const now = new Date();
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -70,4 +82,4 @@ const getNextDayMidnightTimestamp = () => {
 }
 
 
-module.exports = {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp, getUserAccessFromInt}
+module.exports = {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp, getUserAccessFromInt, addToActivityLog}
