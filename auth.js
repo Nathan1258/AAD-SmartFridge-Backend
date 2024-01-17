@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const {verify, verifyAdmin} = require("./verify");
-const {generateUniqueUserID} = require("./Utils");
+const {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp} = require("./Utils");
 const {query} = require("./sql");
 
 
@@ -30,10 +30,14 @@ router.post("/clock-in", async (req,res) => {
     const parameters = [uid];
     try {
         const result = await query(queryString, parameters);
-        console.log(result);
-        console.log(result[0]);
+        const passwordDB = result[0].password;
+        // Need to hash password
+        if(password !== passwordDB) return res.status(401).json({code: 401, message: "Password is invalid", data: null});
+        const response = await createSession(uid);
+        return res.status(response.code).json(response);
     } catch (error) {
-        throw error;
+        console.error("Error creating session:", error);
+        return res.status(500).json({ code: 500, message: "Could not clock user in. Try again later.", data: null});
     }
 });
 
@@ -50,5 +54,25 @@ router.put("/change-user-access", verifyAdmin, (req,res) => {
 
     return res.send("testing permissions");
 });
+
+async function createSession(uid) {
+     try {
+        const accessPIN = await generateUniqueAccessPIN();
+        const expiresAt = getNextDayMidnightTimestamp();
+
+        const queryString = "INSERT INTO ADA.sessions (uid, accessPIN, expiresAt) VALUES (?, ?, ?)";
+        const params = [uid, accessPIN, expiresAt];
+        const result = await query(queryString, params);
+
+        if (result.affectedRows && result.affectedRows > 0) {
+            return { code: 200, message: "User clocked in successfully.", data: {"accessPIN": accessPIN}};
+        } else {
+            return { code: 500, message: "Could not clock user in. Try again later.", data: null};
+        }
+    } catch (error) {
+        console.error("Error creating session:", error);
+        return { code: 500, message: "Could not clock user in. Try again later.", data: null};
+    }
+}
 
 module.exports = router;
