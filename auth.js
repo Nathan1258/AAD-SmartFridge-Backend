@@ -40,6 +40,7 @@ router.post("/clock-in", async (req,res) => {
     const parameters = [uid];
     try {
         const result = await query(queryString, parameters);
+        if(result <= 0 ) return NotAuthorisedResponse(res, "Invalid user number and password");
         const passwordDB = result[0].password;
         if(!await comparePassword(password, passwordDB)) return NotAuthorisedResponse(res, "Password is invalid");
         const response = await createSession(uid);
