@@ -83,6 +83,15 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
   - **Parameters:**
     - *accessPIN*: **integer**
 
+- **Insert an item in the Inventory:** `/v1/item/insert`
+  - **Method:** POST
+  - **Description:** Adds a specific item to the Fridge's inventory.
+  - **Parameters:**
+    - *accessPIN*: **integer**
+    - *itemID*: **integer**
+    - *quantity*: **integer**
+    - *expiryDate*: **string** (DD-MM-YY format **'24-12-24'**)
+
 ## User Verification Functions
 
 In the `verify.js` file, you'll find functions for verifying user permissions:

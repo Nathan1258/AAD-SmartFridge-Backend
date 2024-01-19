@@ -10,6 +10,10 @@ router.post("/register", async (req,res) => {
     const {first_name, last_name, access } = req.body;
     const encryptedPassword = await encryptPassword(req.body.password);
 
+    if(!first_name) return MalformedBodyResponse(res, "'first_name' parameter is missing from request body");
+    if(!last_name) return MalformedBodyResponse(res, "'last_name' parameter is missing from request body");
+    if(!access) return MalformedBodyResponse(res, "'access' parameter is missing from request body");
+
     try{
         let queryString;
         let params;

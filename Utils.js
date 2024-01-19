@@ -62,6 +62,12 @@ const getUserAccessFromInt = (accessValue) => {
     }
 }
 
+const convertToTimestamp = (dateString) => {
+    const formattedDate = '20' + dateString;
+    const date = new Date(formattedDate);
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+}
+
 const addToActivityLog = async(req, actionHappened) => {
     try {
         const queryString = "INSERT INTO ADA.activity (uid, action) values (?, ?)";
@@ -82,4 +88,4 @@ const getNextDayMidnightTimestamp = () => {
 }
 
 
-module.exports = {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp, getUserAccessFromInt, addToActivityLog}
+module.exports = {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp, getUserAccessFromInt, addToActivityLog, convertToTimestamp}
