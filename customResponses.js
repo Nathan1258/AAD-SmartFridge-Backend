@@ -3,6 +3,10 @@ const OKResponse = (res, message, data) =>
     if(!data) return res.status(200).json({"code": 200, "message": message, "data": null});
     return res.status(200).json({"code": 200, "message": message, "data": data});
 }
+const NotFoundResponse = (res, message, data) => {
+    if(!data) return res.status(404).json({"code": 404, "message": message, "data": null});
+    return res.status(404).json({"code": 404, "message": message, "data": data});
+}
 const NotAuthorisedResponse = (res, message, data) =>
 {
     if(!data) return res.status(401).json({"code": 401, "message": message, "data": null});
@@ -19,4 +23,4 @@ const InternalServerErrorResponse = (res, message, data) =>
     return res.status(500).json({"code": 500, "message": message, "data": data});
 }
 
-module.exports = {OKResponse, NotAuthorisedResponse, MalformedBodyResponse, InternalServerErrorResponse};
+module.exports = {OKResponse, NotAuthorisedResponse, MalformedBodyResponse, InternalServerErrorResponse, NotFoundResponse};

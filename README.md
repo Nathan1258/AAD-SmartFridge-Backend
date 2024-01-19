@@ -69,6 +69,20 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
     - (Optional) *uid*: **int**
     - *action*: **string**
 
+### Items
+
+- **Retrieve all items supported by the system:** `/v1/items`
+  - **Method:** GET
+  - **Description:** Returns an array of all items in the system.
+  - **Parameters:**
+    - *accessPIN*: **integer**
+
+- **Return a specific item:** `/v1/item/<item-name>`
+  - **Method:** GET
+  - **Description:** Returns a specific Item's data in the system.
+  - **Parameters:**
+    - *accessPIN*: **integer**
+
 ## User Verification Functions
 
 In the `verify.js` file, you'll find functions for verifying user permissions:
