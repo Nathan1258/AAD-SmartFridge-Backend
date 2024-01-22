@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const {verifyAdmin} = require("./verify");
+const {verify, verifyAdmin} = require("./verify");
 const {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp} = require("./Utils");
 const {query} = require("./sql");
 const {InternalServerErrorResponse, OKResponse, NotAuthorisedResponse, MalformedBodyResponse} = require("./customResponses");
@@ -54,6 +54,10 @@ router.post("/clock-in", async (req,res) => {
         console.error("Error creating session:", error);
         return InternalServerErrorResponse(res, "Could not clock user in. Try again later.");
     }
+});
+
+router.get("/verifyAccessToken", verify, (req,res) => {
+    return OKResponse(res, "Access Token valid", true);
 });
 
 router.put("/change-user-access", verifyAdmin, async (req,res) => {
