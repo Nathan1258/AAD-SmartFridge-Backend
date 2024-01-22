@@ -56,7 +56,7 @@ router.post("/clock-in", async (req,res) => {
     }
 });
 
-router.get("/verifyAccessToken", verify, (req,res) => {
+router.post("/verifyAccessToken", verify, (req,res) => {
     return OKResponse(res, "Access Token valid", true);
 });
 
