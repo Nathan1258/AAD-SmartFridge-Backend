@@ -33,6 +33,10 @@ router.post("/register", async (req,res) => {
     }
 });
 
+router.post("/details", verify, (req,res) => {
+    return OKResponse(res, "User details provided", req.body.user);
+})
+
 router.post("/clock-in", async (req,res) => {
     const uid = req.body.uid;
     const password = req.body.password;
