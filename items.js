@@ -13,6 +13,7 @@ router.post("/", verify, (req, res) => {
   const sqlQuery = `SELECT
                                 p.productID,
                                 p.Name,
+                                p.Price,
                                 i.itemID,
                                 i.quantity,
                                 i.expiryDate,
