@@ -72,13 +72,13 @@ The server will now be available at `http://localhost:5021/`. Alternatively just
 ### Items
 
 - **Retrieve all items supported by the system:** `/v1/items`
-  - **Method:** GET
+  - **Method:** POST
   - **Description:** Returns an array of all items in the system.
   - **Parameters:**
     - *accessPIN*: **integer**
 
 - **Return a specific item:** `/v1/item/<item-name>`
-  - **Method:** GET
+  - **Method:** POST
   - **Description:** Returns a specific Item's data in the system.
   - **Parameters:**
     - *accessPIN*: **integer**

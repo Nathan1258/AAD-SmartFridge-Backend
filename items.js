@@ -4,7 +4,7 @@ const {query} = require("./sql");
 const {OKResponse, InternalServerErrorResponse, NotFoundResponse, MalformedBodyResponse} = require("./customResponses");
 const {convertToTimestamp} = require("./Utils");
 
-router.get("/", verify, (req,res) => {
+router.post("/", verify, (req,res) => {
     return query("SELECT * FROM products").then((response) => {
         return OKResponse(res, "Returned all items", response);
     }).catch((error) => {
@@ -13,7 +13,7 @@ router.get("/", verify, (req,res) => {
     });
 });
 
-router.get("/:productName", verify, (req,res) => {
+router.post("/:productName", verify, (req,res) => {
     const productName = req.params.productName;
     return query("SELECT * FROM products WHERE Name = ?", [productName]).then((response) => {
         if(response <= 0) return NotFoundResponse(res, "Item does not exist.");
