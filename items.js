@@ -117,6 +117,44 @@ router.post("/insert", verify, async (req, res) => {
   }
 });
 
-router.post("/remove", verify, (req, res) => {});
+router.post("/remove", verify, async (req, res) => {
+  const { itemID, quantity } = req.body;
+
+  // Check for missing parameters
+  if (!itemID)
+    return MalformedBodyResponse(
+      res,
+      "'itemID' parameter is missing from request body",
+    );
+  if (!quantity)
+    return MalformedBodyResponse(
+      res,
+      "'quantity' parameter is missing from request body",
+    );
+
+  // SQL to decrease the quantity of the item
+  const sqlUpdate = `
+        UPDATE inventory 
+        SET quantity = GREATEST(quantity - ?, 0)
+        WHERE itemId = ?`;
+
+  const params = [quantity, itemID];
+
+  try {
+    const result = await query(sqlUpdate, params);
+    if (result.affectedRows === 0)
+      return NotFoundResponse(
+        res,
+        "Item not found or quantity is already zero.",
+      );
+    return OKResponse(res, "Inventory updated successfully");
+  } catch (err) {
+    console.error(err);
+    return InternalServerErrorResponse(
+      res,
+      "Could not update Inventory. Please try again.",
+    );
+  }
+});
 
 module.exports = router;
