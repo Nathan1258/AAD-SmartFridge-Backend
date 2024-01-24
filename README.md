@@ -99,8 +99,16 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Parameters:**
         - *accessPIN*: **integer**
         - *itemID*: **integer**
-        - *quantity*: **integer**
+        - *quantity to remove*: **integer**
         - *expiryDate*: **string** (DD-MM-YY format **'24-12-24'**)
+
+- **Remove an item in the Inventory:** `/v1/item/remove`
+    - **Method:** POST
+    - **Description:** Adds a specific item to the Fridge's inventory.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - *itemID*: **integer**
+        - *quantity to remove*: **integer**
 
 ## User Verification Functions
 
