@@ -116,7 +116,7 @@ router.post("/verifyAccessToken", verify, (req, res) => {
   return OKResponse(res, "Access Token valid", true);
 });
 
-router.put("/change-user-access", verifyAdmin, async (req, res) => {
+router.post("/change-user-access", verifyAdmin, async (req, res) => {
   const uid = req.body.uid;
   const newUserAccess = req.body.newAccessValue.toLowerCase();
   const validAccessValues = ["normal", "admin", "health"];

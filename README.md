@@ -53,7 +53,7 @@ endpoint [here](https://aad-api.ellisn.com)
         - *password*: **string**
 
 - **Change a user's access:** `/v1/users/change-user-access`
-    - **Method:** PUT
+    - **Method:** POST
     - **Description:** Change a user's access
     - **Permissions:** Requires admin privileges.
     - **Parameters:**
