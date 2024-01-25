@@ -159,6 +159,22 @@ router.put("/change-user-access", verifyAdmin, async (req, res) => {
   }
 });
 
+router.post("/getAllUsers", verifyAdmin, async (req, res) => {
+  const sqlQuery = `SELECT * FROM users;`;
+
+  return query(sqlQuery)
+    .then((response) => {
+      return OKResponse(res, "Returned all users", response);
+    })
+    .catch((error) => {
+      console.error("Error getting all users", error);
+      return InternalServerErrorResponse(
+        res,
+        "Could not fetch users. Try again later.",
+      );
+    });
+});
+
 async function createSession(uid) {
   try {
     await deleteSession(uid);

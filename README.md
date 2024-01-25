@@ -61,6 +61,13 @@ endpoint [here](https://aad-api.ellisn.com)
         - *uid*: **string**
         - *newAccessValue*: **integer**
 
+- **Get all users:** `/v1/users/getallusers`
+    - **Method:** POST
+    - **Description:** Returns all users in the database
+    - **Permissions:** Requires admin privileges.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+
 ### Reports
 
 - **Generate a report:** `/v1/reports/generate`
