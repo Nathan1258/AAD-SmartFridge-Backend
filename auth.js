@@ -53,6 +53,7 @@ router.post("/register", async (req, res) => {
         "Unable to create user. Please try again.",
       );
     return OKResponse(res, "User successfully created", {
+      uid: result.insertId,
       first_name: first_name,
       last_name: last_name,
     });
