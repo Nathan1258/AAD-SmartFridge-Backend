@@ -94,13 +94,13 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Query Parameters**
         - (Optional) *instock*: **boolean**
 
-- **Return a specific item:** `/v1/item/<item-name>`
+- **Return a specific item:** `/v1/items/fetch/<item-name>`
     - **Method:** POST
     - **Description:** Returns a specific Item's data in the system.
     - **Parameters:**
         - *accessPIN*: **integer**
 
-- **Insert an item in the Inventory:** `/v1/item/insert`
+- **Insert an item in the Inventory:** `/v1/items/insert`
     - **Method:** POST
     - **Description:** Adds a specific item to the Fridge's inventory.
     - **Parameters:**
@@ -109,7 +109,7 @@ endpoint [here](https://aad-api.ellisn.com)
         - *quantity to remove*: **integer**
         - *expiryDate*: **string** (DD-MM-YY format **'24-12-24'**)
 
-- **Remove an item in the Inventory:** `/v1/item/remove`
+- **Remove an item in the Inventory:** `/v1/items/remove`
     - **Method:** POST
     - **Description:** Adds a specific item to the Fridge's inventory.
     - **Parameters:**

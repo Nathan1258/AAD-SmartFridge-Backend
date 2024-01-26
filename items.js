@@ -51,7 +51,7 @@ router.post("/", verify, (req, res) => {
     });
 });
 
-router.post("/:productName", verify, (req, res) => {
+router.post("/fetch/:productName", verify, (req, res) => {
   const productName = req.params.productName;
   return query("SELECT * FROM products WHERE Name = ?", [productName])
     .then((response) => {
