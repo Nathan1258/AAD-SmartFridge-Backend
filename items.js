@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const { verify } = require("./verify");
-const { query } = require("./sql");
+const { knex } = require("./sql");
 const {
   OKResponse,
   InternalServerErrorResponse,
@@ -10,56 +10,50 @@ const {
 const { convertToTimestamp } = require("./Utils");
 
 router.post("/", verify, (req, res) => {
-  const sqlQuery = `SELECT
-                                p.productID,
-                                p.Name,
-                                p.Price,
-                                i.itemID,
-                                i.quantity,
-                                i.expiryDate,
-                                i.lastUpdated
-                            FROM
-                                products p
-                            JOIN
-                                inventory i ON p.productID = i.itemID;
-`;
+  let DBQUERY;
 
   if (req.query.instock) {
-    return query(sqlQuery)
-      .then((response) => {
-        return OKResponse(res, "Returned all items in stock", response);
-      })
-      .catch((error) => {
-        console.error("Error getting all items in stock", error);
-        return InternalServerErrorResponse(
-          res,
-          "Could not fetch products. Try again later.",
-        );
-      });
+    DBQUERY = knex("products as p")
+      .select(
+        "p.productID",
+        "p.Name",
+        "p.Price",
+        "i.itemID",
+        "i.quantity",
+        "i.expiryDate",
+        "i.lastUpdated",
+      )
+      .join("inventory as i", "p.productID", "=", "i.itemID")
+      .where("i.quantity", ">", 0);
+  } else {
+    DBQUERY = knex("products").select("*");
   }
 
-  return query("SELECT * FROM products")
-    .then((response) => {
-      return OKResponse(res, "Returned all items", response);
-    })
-    .catch((error) => {
-      console.error("Error getting all products");
-      return InternalServerErrorResponse(
-        res,
-        "Could not fetch all products. Try again later.",
-      );
-    });
+  return DBQUERY.then((response) => {
+    return OKResponse(
+      res,
+      req.query.instock ? "Returned all items in stock" : "Returned all items",
+      response,
+    );
+  }).catch((error) => {
+    console.error("Error getting products", error);
+    return InternalServerErrorResponse(
+      res,
+      "Could not fetch products. Try again later.",
+    );
+  });
 });
 
 router.post("/fetch/:productName", verify, (req, res) => {
   const productName = req.params.productName;
-  return query("SELECT * FROM products WHERE Name = ?", [productName])
-    .then((response) => {
-      if (response <= 0) return NotFoundResponse(res, "Item does not exist.");
-      return OKResponse(res, "Item returned", response[0]);
+
+  return knex("products")
+    .where("Name", productName)
+    .then((rows) => {
+      return OKResponse(res, "Product returned", rows);
     })
     .catch((error) => {
-      console.error("Error getting all products");
+      console.error("Error getting all products: ", error);
       return InternalServerErrorResponse(
         res,
         "Could not fetch all products. Try again later.",
@@ -92,35 +86,35 @@ router.post("/insert", verify, async (req, res) => {
       "'expiryDate' must be in DD-MM-YY format",
     );
 
-  const sqlUpsert = `
-        INSERT INTO inventory (itemId, quantity, expiryDate)
-        VALUES (?, ?, ?)
-        ON DUPLICATE KEY UPDATE 
-        quantity = quantity + VALUES(quantity);`;
-
-  const params = [itemID, quantity, convertToTimestamp(expiryDate)];
-
-  try {
-    const result = await query(sqlUpsert, params);
-    if (result <= 0)
+  return knex("inventory")
+    .insert({
+      itemId: itemID,
+      quantity: quantity,
+      expiryDate: convertToTimestamp(expiryDate),
+    })
+    .onConflict("itemId")
+    .merge({ quantity: knex.raw("quantity + VALUES(quantity)") })
+    .then((rows) => {
+      if (rows <= 0) {
+        return InternalServerErrorResponse(
+          res,
+          "Could not update inventory with selected item: " + itemID,
+        );
+      }
+      return OKResponse(res, "Inventory updated successfully");
+    })
+    .catch((error) => {
+      console.error(err);
       return InternalServerErrorResponse(
         res,
         "Could not update Inventory. Please try again.",
       );
-    return OKResponse(res, "Inventory updated successfully");
-  } catch (err) {
-    console.error(err);
-    return InternalServerErrorResponse(
-      res,
-      "Could not update Inventory. Please try again.",
-    );
-  }
+    });
 });
 
 router.post("/remove", verify, async (req, res) => {
   const { itemID, quantity } = req.body;
 
-  // Check for missing parameters
   if (!itemID)
     return MalformedBodyResponse(
       res,
@@ -132,29 +126,27 @@ router.post("/remove", verify, async (req, res) => {
       "'quantity' parameter is missing from request body",
     );
 
-  // SQL to decrease the quantity of the item
-  const sqlUpdate = `
-        UPDATE inventory 
-        SET quantity = GREATEST(quantity - ?, 0)
-        WHERE itemId = ?`;
-
-  const params = [quantity, itemID];
-
-  try {
-    const result = await query(sqlUpdate, params);
-    if (result.affectedRows === 0)
-      return NotFoundResponse(
+  return knex("inventory")
+    .update({
+      quantity: knex.raw("GREATEST(quantity - ?, 0)", [quantity]),
+    })
+    .where("itemId", itemID)
+    .then((rows) => {
+      if (rows <= 0) {
+        return NotFoundResponse(
+          res,
+          "Item not found or quantity is already zero.",
+        );
+      }
+      return OKResponse(res, "Inventory updated successfully");
+    })
+    .catch((error) => {
+      console.error(err);
+      return InternalServerErrorResponse(
         res,
-        "Item not found or quantity is already zero.",
+        "Could not update Inventory. Please try again.",
       );
-    return OKResponse(res, "Inventory updated successfully");
-  } catch (err) {
-    console.error(err);
-    return InternalServerErrorResponse(
-      res,
-      "Could not update Inventory. Please try again.",
-    );
-  }
+    });
 });
 
 module.exports = router;

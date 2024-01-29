@@ -1,91 +1,106 @@
-const {query} = require("./sql");
+const { knex } = require("./sql");
 
 // Generates a unique userID
-const generateUniqueUserID = async () => {
-    let uniqueUserID;
-    const maxAttempts = 1000;
-
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const randomUserID = Math.floor(1000 + Math.random() * 9000);
-        const sql = "SELECT COUNT(*) as count FROM users WHERE userID = ?";
-        const params = [randomUserID];
-
-        try {
-            const result = await query(sql, params);
-            if (result[0].count === 0) {
-                uniqueUserID = randomUserID;
-                break;
-            }
-        } catch (error) {
-            throw error;
-        }
-    }
-    if (!uniqueUserID) {
-        throw new Error("Unable to generate a unique user ID after maximum attempts.");
-    }
-    return uniqueUserID;
-};
+// const generateUniqueUserID = async () => {
+//   let uniqueUserID;
+//   const maxAttempts = 1000;
+//
+//   for (let attempt = 0; attempt < maxAttempts; attempt++) {
+//     const randomUserID = Math.floor(1000 + Math.random() * 9000);
+//     const sql = "SELECT COUNT(*) as count FROM users WHERE userID = ?";
+//     const params = [randomUserID];
+//
+//     try {
+//       const result = await query(sql, params);
+//       if (result[0].count === 0) {
+//         uniqueUserID = randomUserID;
+//         break;
+//       }
+//     } catch (error) {
+//       throw error;
+//     }
+//   }
+//   if (!uniqueUserID) {
+//     throw new Error(
+//       "Unable to generate a unique user ID after maximum attempts.",
+//     );
+//   }
+//   return uniqueUserID;
+// };
 
 const generateUniqueAccessPIN = async () => {
-    let uniqueAccessPIN;
-    const maxAttempts = 1000;
+  let uniqueAccessPIN;
+  const maxAttempts = 1000;
 
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const randomAccessPIN = Math.floor(1000 + Math.random() * 9000);
-        const sql = "SELECT COUNT(*) as count FROM ADA.sessions WHERE accessPIN = ?";
-        const params = [randomAccessPIN];
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const randomAccessPIN = Math.floor(1000 + Math.random() * 9000);
+    const count = await knex("sessions")
+      .where("accessPIN", randomAccessPIN)
+      .count("accessPIN as count")
+      .first();
 
-        try {
-            const result = await query(sql, params);
-            if (result[0].count === 0) {
-                uniqueAccessPIN = randomAccessPIN;
-                break;
-            }
-        } catch (error) {
-            throw error;
-        }
+    if (count.count === 0) {
+      uniqueAccessPIN = randomAccessPIN;
+      break;
     }
-    if (!uniqueAccessPIN) {
-        throw new Error("Unable to generate a unique user ID after maximum attempts.");
-    }
-    return uniqueAccessPIN;
+  }
+
+  if (!uniqueAccessPIN) {
+    throw new Error(
+      "Unable to generate a unique user ID after maximum attempts.",
+    );
+  }
+
+  return uniqueAccessPIN;
 };
 
 const getUserAccessFromInt = (accessValue) => {
-    switch (accessValue){
-        case 0:
-            return "Normal";
-        case 1:
-            return "Admin";
-        case 2:
-            return "Health And Safety";
-    }
-}
+  switch (accessValue) {
+    case 0:
+      return "Normal";
+    case 1:
+      return "Admin";
+    case 2:
+      return "Health And Safety";
+  }
+};
 
 const convertToTimestamp = (dateString) => {
-    const formattedDate = '20' + dateString;
-    const date = new Date(formattedDate);
-    return date.toISOString().slice(0, 19).replace('T', ' ');
-}
+  const formattedDate = "20" + dateString;
+  const date = new Date(formattedDate);
+  return date.toISOString().slice(0, 19).replace("T", " ");
+};
 
-const addToActivityLog = async(req, actionHappened) => {
-    try {
-        const queryString = "INSERT INTO ADA.activity (uid, action) values (?, ?)";
-        const params = [req.body.user.uid, actionHappened];
-        const result = await query(queryString, params);
-        return result.affectedRows > 0;
-    }catch (e) {
-        console.log("Error adding to activity: ", e);
-        return false;
-    }
+const addToActivityLog = async (req, actionHappened) => {
+  return knex("activity")
+    .insert({
+      uid: req.body.user.uid,
+      action: actionHappened,
+    })
+    .then((rows) => {
+      return rows.length > 0;
+    })
+    .catch((error) => {
+      console.log("Error adding to activity: ", e);
+      return false;
+    });
 };
 
 const getNextDayMidnightTimestamp = () => {
-    const now = new Date();
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    return tomorrow.toISOString();
-}
+  const now = new Date();
+  const tomorrow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+  );
+  tomorrow.setHours(0, 0, 0, 0);
+  return tomorrow.toISOString();
+};
 
-
-module.exports = {generateUniqueUserID, generateUniqueAccessPIN, getNextDayMidnightTimestamp, getUserAccessFromInt, addToActivityLog, convertToTimestamp}
+module.exports = {
+  generateUniqueAccessPIN,
+  getNextDayMidnightTimestamp,
+  getUserAccessFromInt,
+  addToActivityLog,
+  convertToTimestamp,
+};
