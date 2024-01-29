@@ -78,6 +78,24 @@ cron.schedule("0 */12 * * *", async () => {
   console.log("Processing of products near depletion has completed.");
 });
 
+router.post("/", verify, async (req, res) => {
+  return knex("deliveries")
+    .select("*")
+    .then((deliveries) => {
+      if (deliveries.count > 0) {
+        return OKResponse(res, "All deliveries returned", deliveries);
+      }
+      return OKResponse(res, "No deliveries available", []);
+    })
+    .catch((error) => {
+      console.log("Could not get all deliveries: ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Could not get all deliveries. Please try again later",
+      );
+    });
+});
+
 router.post("/add", verify, async (req, res) => {
   const { productID, quantity } = req.body;
   const orderID = generateOrderID();
