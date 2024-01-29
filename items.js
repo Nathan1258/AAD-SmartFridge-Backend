@@ -29,7 +29,7 @@ router.post("/", verify, (req, res) => {
     DBQUERY = knex("products").select("*");
   }
 
-  DBQUERY.then((response) => {
+  return DBQUERY.then((response) => {
     return OKResponse(
       res,
       req.query.instock ? "Returned all items in stock" : "Returned all items",
@@ -86,30 +86,30 @@ router.post("/insert", verify, async (req, res) => {
       "'expiryDate' must be in DD-MM-YY format",
     );
 
-  try {
-    const result = await knex("inventory")
-      .insert({
-        itemId: itemID,
-        quantity: quantity,
-        expiryDate: convertToTimestamp(expiryDate),
-      })
-      .onConflict("itemId")
-      .merge({ quantity: knex.raw("quantity + VALUES(quantity)") });
-
-    if (result <= 0) {
+  return knex("inventory")
+    .insert({
+      itemId: itemID,
+      quantity: quantity,
+      expiryDate: convertToTimestamp(expiryDate),
+    })
+    .onConflict("itemId")
+    .merge({ quantity: knex.raw("quantity + VALUES(quantity)") })
+    .then((rows) => {
+      if (rows <= 0) {
+        return InternalServerErrorResponse(
+          res,
+          "Could not update inventory with selected item: " + itemID,
+        );
+      }
+      return OKResponse(res, "Inventory updated successfully");
+    })
+    .catch((error) => {
+      console.error(err);
       return InternalServerErrorResponse(
         res,
-        "Could not update inventory with selected item: " + itemID,
+        "Could not update Inventory. Please try again.",
       );
-    }
-    return OKResponse(res, "Inventory updated successfully");
-  } catch (err) {
-    console.error(err);
-    return InternalServerErrorResponse(
-      res,
-      "Could not update Inventory. Please try again.",
-    );
-  }
+    });
 });
 
 router.post("/remove", verify, async (req, res) => {
@@ -126,27 +126,27 @@ router.post("/remove", verify, async (req, res) => {
       "'quantity' parameter is missing from request body",
     );
 
-  try {
-    const result = await knex("inventory")
-      .update({
-        quantity: knex.raw("GREATEST(quantity - ?, 0)", [quantity]),
-      })
-      .where("itemId", itemID);
-
-    if (result === 0) {
-      return NotFoundResponse(
+  return knex("inventory")
+    .update({
+      quantity: knex.raw("GREATEST(quantity - ?, 0)", [quantity]),
+    })
+    .where("itemId", itemID)
+    .then((rows) => {
+      if (rows <= 0) {
+        return NotFoundResponse(
+          res,
+          "Item not found or quantity is already zero.",
+        );
+      }
+      return OKResponse(res, "Inventory updated successfully");
+    })
+    .catch((error) => {
+      console.error(err);
+      return InternalServerErrorResponse(
         res,
-        "Item not found or quantity is already zero.",
+        "Could not update Inventory. Please try again.",
       );
-    }
-    return OKResponse(res, "Inventory updated successfully");
-  } catch (err) {
-    console.error(err);
-    return InternalServerErrorResponse(
-      res,
-      "Could not update Inventory. Please try again.",
-    );
-  }
+    });
 });
 
 module.exports = router;

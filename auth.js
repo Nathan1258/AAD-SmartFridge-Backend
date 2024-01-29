@@ -1,11 +1,10 @@
 const router = require("express").Router();
 const { verify, verifyAdmin } = require("./verify");
 const {
-  generateUniqueUserID,
   generateUniqueAccessPIN,
   getNextDayMidnightTimestamp,
 } = require("./Utils");
-const { query } = require("./sql");
+const { knex } = require("./sql");
 const {
   InternalServerErrorResponse,
   OKResponse,
@@ -15,8 +14,9 @@ const {
 const { encryptPassword, comparePassword } = require("./secure");
 
 router.post("/register", async (req, res) => {
-  const { first_name, last_name, access } = req.body;
-  const encryptedPassword = await encryptPassword(req.body.password);
+  const { first_name, last_name, access, password } = req.body;
+  const encryptedPassword = await encryptPassword(password);
+  const allowedAccess = ["normal", "admin", "health"];
 
   if (!first_name)
     return MalformedBodyResponse(
@@ -34,45 +34,46 @@ router.post("/register", async (req, res) => {
       "'access' parameter is missing from request body",
     );
 
-  try {
-    let queryString;
-    let params;
-    if (!access) {
-      queryString =
-        "INSERT INTO ADA.users (first_name, last_name, password) values (?, ?, ?)";
-      params = [first_name, last_name, encryptedPassword];
-    } else {
-      queryString =
-        "INSERT INTO ADA.users (first_name, last_name, access, password) values (?, ?, ?, ?)";
-      params = [first_name, last_name, access.toLowerCase(), encryptedPassword];
-    }
-    const result = await query(queryString, params);
-    if (result.affectedRows <= 0)
+  let insertData = {
+    first_name: first_name,
+    last_name: last_name,
+    password: encryptedPassword,
+  };
+
+  if (access && allowedAccess.includes(access.toLowerCase())) {
+    insertData.access = access.toLowerCase();
+  }
+  knex("users")
+    .insert(insertData)
+    .then((rows) => {
+      if (rows <= 0) {
+        return InternalServerErrorResponse(
+          res,
+          "Unable to create user. Please try again.",
+        );
+      }
+      return OKResponse(res, "User successfully created", {
+        uid: result[0],
+        first_name: first_name,
+        last_name: last_name,
+      });
+    })
+    .catch((error) => {
+      console.error("Error registering a user: ", e);
       return InternalServerErrorResponse(
         res,
         "Unable to create user. Please try again.",
       );
-    return OKResponse(res, "User successfully created", {
-      uid: result.insertId,
-      first_name: first_name,
-      last_name: last_name,
     });
-  } catch (e) {
-    console.error("Error registering a user: ", e);
-    return InternalServerErrorResponse(
-      res,
-      "Unable to create user. Please try again.",
-    );
-  }
 });
 
 router.post("/details", verify, (req, res) => {
-  return OKResponse(res, "User details provided", req.body.user);
+  const { password, ...userWithoutPassword } = req.body.user;
+  return OKResponse(res, "User details provided", userWithoutPassword);
 });
 
 router.post("/clock-in", async (req, res) => {
-  const uid = req.body.uid;
-  const password = req.body.password;
+  const { uid, password } = req.body;
 
   if (!uid)
     return MalformedBodyResponse(
@@ -85,31 +86,43 @@ router.post("/clock-in", async (req, res) => {
       "'password' parameter is missing from request body",
     );
 
-  const queryString = "SELECT * FROM users WHERE uid = ?";
-  const parameters = [uid];
-  try {
-    const result = await query(queryString, parameters);
-    if (result <= 0)
-      return NotAuthorisedResponse(res, "Invalid user number and password");
-    const passwordDB = result[0].password;
-    if (!(await comparePassword(password, passwordDB)))
-      return NotAuthorisedResponse(res, "Password is invalid");
-    const response = await createSession(uid);
-    if (response != null)
-      return OKResponse(res, "User clocked in successfully", {
-        accessPIN: response,
-      });
-    return InternalServerErrorResponse(
-      res,
-      "Unable to clock user in. Try again later.",
-    );
-  } catch (error) {
-    console.error("Error creating session:", error);
-    return InternalServerErrorResponse(
-      res,
-      "Could not clock user in. Try again later.",
-    );
-  }
+  return knex("users")
+    .select("*")
+    .where("uid", uid)
+    .then(async (rows) => {
+      if (rows <= 0) {
+        return NotAuthorisedResponse(res, "Invalid user number and password");
+      }
+      const passwordDB = rows[0].password;
+
+      if (!(await comparePassword(password, passwordDB)))
+        return NotAuthorisedResponse(res, "Password is invalid");
+
+      const response = await createSession(uid);
+
+      if (response != null) {
+        return OKResponse(res, "User clocked in successfully", {
+          accessPIN: response,
+        });
+      } else {
+        return InternalServerErrorResponse(
+          res,
+          "User session could not be created, try again later",
+        );
+      }
+
+      return InternalServerErrorResponse(
+        res,
+        "Unable to clock user in. Try again later.",
+      );
+    })
+    .catch((error) => {
+      console.error("Error creating session:", error);
+      return InternalServerErrorResponse(
+        res,
+        "Could not clock user in. Try again later.",
+      );
+    });
 });
 
 router.post("/verifyAccessToken", verify, (req, res) => {
@@ -117,8 +130,7 @@ router.post("/verifyAccessToken", verify, (req, res) => {
 });
 
 router.post("/change-user-access", verifyAdmin, async (req, res) => {
-  const uid = req.body.uid;
-  const newUserAccess = req.body.newAccessValue;
+  const { uid, newAccessValue } = req.body;
   const validAccessValues = ["normal", "admin", "health"];
 
   if (!uid)
@@ -126,45 +138,48 @@ router.post("/change-user-access", verifyAdmin, async (req, res) => {
       res,
       "'uid' parameter is missing from request body.",
     );
-  if (!newUserAccess)
+  if (!newAccessValue)
     return MalformedBodyResponse(
       res,
       "'newAccessValue' parameter is missing from request body",
     );
-  if (!validAccessValues.includes(newUserAccess))
+  if (!validAccessValues.includes(newAccessValue))
     return MalformedBodyResponse(
       res,
       "Invalid 'accessValue' parameter. Valid values are: 'Normal' (normal user), 'Admin' (admin), 'Health' (health officer)",
     );
 
-  const queryString = "UPDATE ADA.users SET access = ? WHERE uid = ?";
-  const params = [newUserAccess, uid];
-  try {
-    const result = await query(queryString, params);
-    if (result <= 0)
+  return knex("users")
+    .where("uid", uid)
+    .update({
+      access: newAccessValue,
+    })
+    .then((rows) => {
+      if (rows <= 0) {
+        return InternalServerErrorResponse(
+          res,
+          "Unable to update user's access. Please try again.",
+        );
+      }
+      return OKResponse(res, "User's access has been successfully updated", {
+        uid: uid,
+        "New access": newAccessValue,
+      });
+    })
+    .catch((error) => {
+      console.error("Error updating user access: ", error);
       return InternalServerErrorResponse(
         res,
         "Unable to update user's access. Please try again.",
       );
-    return OKResponse(res, "User's access has been successfully updated", {
-      uid: uid,
-      "New access": newUserAccess,
     });
-  } catch (e) {
-    console.error("Error updating user access: ", e);
-    return InternalServerErrorResponse(
-      res,
-      "Unable to update user's access. Please try again.",
-    );
-  }
 });
 
 router.post("/getAllUsers", verifyAdmin, async (req, res) => {
-  const sqlQuery = `SELECT * FROM users;`;
-
-  return query(sqlQuery)
-    .then((response) => {
-      return OKResponse(res, "Returned all users", response);
+  return knex("users")
+    .select("*")
+    .then((rows) => {
+      return OKResponse(res, "Returned all users", rows);
     })
     .catch((error) => {
       console.error("Error getting all users", error);
@@ -176,36 +191,37 @@ router.post("/getAllUsers", verifyAdmin, async (req, res) => {
 });
 
 async function createSession(uid) {
-  try {
-    await deleteSession(uid);
-    const accessPIN = await generateUniqueAccessPIN();
-    const expiresAt = getNextDayMidnightTimestamp();
+  await deleteSession(uid);
+  const accessPIN = await generateUniqueAccessPIN();
+  const expiresAt = getNextDayMidnightTimestamp();
 
-    const queryString =
-      "INSERT INTO ADA.sessions (uid, accessPIN, expiresAt) VALUES (?, ?, ?)";
-    const params = [uid, accessPIN, expiresAt];
-    const result = await query(queryString, params);
-
-    if (result.affectedRows && result.affectedRows > 0) {
-      return accessPIN;
-    } else {
+  return knex("sessions")
+    .insert({
+      uid: uid,
+      accessPIN: accessPIN,
+      expiresAt: expiresAt,
+    })
+    .then((rows) => {
+      console.log(rows);
+      if (rows >= 1) {
+        return accessPIN;
+      }
       return null;
-    }
-  } catch (error) {
-    console.error("Error creating session:", error);
-    return null;
-  }
+    })
+    .catch((error) => {
+      console.error("Error creating session:", error);
+      return null;
+    });
 }
 
 async function deleteSession(uid) {
-  try {
-    const queryString = "DELETE FROM ADA.sessions WHERE uid = ?";
-    const params = [uid];
-    await query(queryString, params);
-  } catch (error) {
-    console.error("Error creating session:", error);
-    return false;
-  }
+  return knex("sessions")
+    .where("uid", uid)
+    .del()
+    .catch((error) => {
+      console.error("Error deleting session:", error);
+      return false;
+    });
 }
 
 module.exports = router;
