@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { verify } = require("./verify");
+const { verify, verifyAdmin } = require("./verify");
 const { knex } = require("./sql");
 const {
   OKResponse,
@@ -43,7 +43,6 @@ router.post("/", verify, (req, res) => {
     );
   });
 });
-
 router.post("/fetch/:productName", verify, (req, res) => {
   const productName = req.params.productName;
 
@@ -60,7 +59,6 @@ router.post("/fetch/:productName", verify, (req, res) => {
       );
     });
 });
-
 router.post("/insert", verify, async (req, res) => {
   const { itemID, quantity, expiryDate } = req.body;
   const expiryDateFormat = /^\d{2}-\d{2}-\d{2}$/;
@@ -111,7 +109,6 @@ router.post("/insert", verify, async (req, res) => {
       );
     });
 });
-
 router.post("/remove", verify, async (req, res) => {
   const { itemID, quantity } = req.body;
 
@@ -145,6 +142,35 @@ router.post("/remove", verify, async (req, res) => {
       return InternalServerErrorResponse(
         res,
         "Could not update Inventory. Please try again.",
+      );
+    });
+});
+
+router.post("/expiring", verifyAdmin, async (req, res) => {
+  const threeDaysFromNow = new Date();
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+  threeDaysFromNow.setHours(0, 0, 0, 0);
+
+  const formattedThreeDaysFromNow = threeDaysFromNow.toISOString().slice(0, 10);
+
+  return knex("inventory")
+    .select("*")
+    .where("expiryDate", "<=", formattedThreeDaysFromNow)
+    .then((productsExpiringSoon) => {
+      if (productsExpiringSoon.length > 0) {
+        return OKResponse(
+          res,
+          "Products expiring within 3 days have been returned",
+          productsExpiringSoon,
+        );
+      }
+      return OKResponse(res, "No products are expiring soon", []);
+    })
+    .catch((error) => {
+      console.error("Could not fetch all products expiring soon ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Unable to fetch products. Please try again later.",
       );
     });
 });

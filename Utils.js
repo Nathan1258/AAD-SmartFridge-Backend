@@ -72,6 +72,7 @@ const convertToTimestamp = (dateString) => {
 };
 
 const addToActivityLog = async (req, actionHappened) => {
+  if (!req) req.body.user.uid = "System";
   return knex("activity")
     .insert({
       uid: req.body.user.uid,
@@ -97,10 +98,25 @@ const getNextDayMidnightTimestamp = () => {
   return tomorrow.toISOString();
 };
 
+function getCurrentTimestamp() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // January is 0
+  const day = String(now.getDate()).padStart(2, "0");
+
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 module.exports = {
   generateUniqueAccessPIN,
   getNextDayMidnightTimestamp,
   getUserAccessFromInt,
   addToActivityLog,
   convertToTimestamp,
+  getCurrentTimestamp,
 };
