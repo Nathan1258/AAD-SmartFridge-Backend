@@ -126,9 +126,12 @@ router.post("/order", verify, async (req, res) => {
 });
 
 router.post("/add", verifyAdmin, async (req, res) => {
+  let endpoint = "";
   const { products, productID, quantity } = req.body;
   const orderID = generateOrderID();
   let validArrayProvided = false;
+
+  if (req.body.endpoint) endpoint = req.body.endpoint;
 
   if ((!products || products.length === 0) && (!productID || !quantity)) {
     return MalformedBodyResponse(
@@ -176,7 +179,7 @@ router.post("/add", verifyAdmin, async (req, res) => {
           quantity: product.quantity,
           orderedAt: getCurrentTimestamp(),
           status: "Processing",
-          triggerType: "User added",
+          triggerType: "User added" + endpoint,
         })
         .then((row) => {
           if (row.length > 0) {
@@ -216,7 +219,7 @@ router.post("/add", verifyAdmin, async (req, res) => {
       quantity: quantity,
       orderedAt: getCurrentTimestamp(),
       status: "Processing",
-      triggerType: "User added",
+      triggerType: "User added" + endpoint,
     })
     .then((row) => {
       if (row.length > 0)
