@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { verify } = require("./verify");
+const { verify, verifyAdmin } = require("./verify");
 const { knex } = require("./sql");
 const cron = require("node-cron");
 const {
@@ -96,7 +96,7 @@ router.post("/", verify, async (req, res) => {
     });
 });
 
-router.post("/add", verify, async (req, res) => {
+router.post("/add", verifyAdmin, async (req, res) => {
   const { products, productID, quantity } = req.body;
   const orderID = generateOrderID();
   let validArrayProvided = false;
