@@ -103,6 +103,8 @@ router.post("/order", verify, async (req, res) => {
   const orderID = parseInt(generateOrderID()).toString();
   return knex("orders")
     .select("*")
+    .join("products", "orders.productID", "=", "products.productID")
+    .select("orders.*", "products.Name")
     .where("orderID", orderID)
     .then((orders) => {
       if (orders.length > 0) {
