@@ -147,33 +147,55 @@ router.post("/remove", verify, async (req, res) => {
 });
 
 router.post("/expiring", verifyAdmin, async (req, res) => {
-  const threeDaysFromNow = new Date();
-  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-  threeDaysFromNow.setHours(0, 0, 0, 0);
+  try {
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    threeDaysFromNow.setHours(0, 0, 0, 0);
 
-  const formattedThreeDaysFromNow = threeDaysFromNow.toISOString().slice(0, 10);
+    const formattedThreeDaysFromNow = threeDaysFromNow
+      .toISOString()
+      .slice(0, 10);
 
-  return knex("inventory")
-    .join("products", "inventory.itemID", "=", "products.productID")
-    .select("inventory.*", "products.Name")
-    .where("inventory.expiryDate", "<=", formattedThreeDaysFromNow)
-    .then((productsExpiringSoon) => {
-      if (productsExpiringSoon.length > 0) {
-        return OKResponse(
-          res,
-          "Products expiring within 3 days have been returned",
-          productsExpiringSoon,
-        );
-      }
-      return OKResponse(res, "No products are expiring soon", []);
-    })
-    .catch((error) => {
-      console.error("Could not fetch all products expiring soon ", error);
-      return InternalServerErrorResponse(
+    const orderID = generateOrderID();
+
+    const productsInOrder = await knex("orders")
+      .select("productID")
+      .where("orderID", orderID);
+
+    const productIDsInOrder = productsInOrder.map((order) => order.productID);
+
+    const productsExpiringSoon = await knex("inventory")
+      .join("products", "inventory.itemID", "=", "products.productID")
+      .select("inventory.*", "products.Name")
+      .where("inventory.expiryDate", "<=", formattedThreeDaysFromNow)
+      .whereNotIn("inventory.itemID", productIDsInOrder);
+
+    if (productsExpiringSoon.length > 0) {
+      return OKResponse(
         res,
-        "Unable to fetch products. Please try again later.",
+        "Products expiring within 3 days and not in this week's order have been returned",
+        productsExpiringSoon,
       );
-    });
+    } else {
+      return OKResponse(res, "No products are expiring soon", []);
+    }
+  } catch (error) {
+    console.error("Could not fetch products expiring soon ", error);
+    return InternalServerErrorResponse(
+      res,
+      "Unable to fetch products. Please try again later.",
+    );
+  }
 });
+
+function generateOrderID(offsetWeeks = 0) {
+  const currentDate = new Date();
+  currentDate.setDate(currentDate.getDate() - offsetWeeks * 7);
+
+  const [year, week] = getWeekNumber(currentDate);
+  const shortYear = year.toString().slice(-2);
+  const formattedWeek = week.toString().padStart(2, "0");
+  return formattedWeek + shortYear;
+}
 
 module.exports = router;
