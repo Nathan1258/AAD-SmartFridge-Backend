@@ -92,8 +92,8 @@ router.post("/insert", verify, async (req, res) => {
     })
     .onConflict("itemId")
     .merge({ quantity: knex.raw("quantity + VALUES(quantity)") })
-    .then((rows) => {
-      if (rows <= 0) {
+    .then((result) => {
+      if (result.length === 0) {
         return InternalServerErrorResponse(
           res,
           "Could not update inventory with selected item: " + itemID,
