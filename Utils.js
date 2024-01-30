@@ -66,7 +66,8 @@ const getUserAccessFromInt = (accessValue) => {
 };
 
 const convertToTimestamp = (dateString) => {
-  const formattedDate = "20" + dateString;
+  const [day, month, year] = dateString.split("-");
+  const formattedDate = `20${year}-${month}-${day}`;
   const date = new Date(formattedDate);
   return date.toISOString().slice(0, 19).replace("T", " ");
 };
