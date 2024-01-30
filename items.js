@@ -154,8 +154,9 @@ router.post("/expiring", verifyAdmin, async (req, res) => {
   const formattedThreeDaysFromNow = threeDaysFromNow.toISOString().slice(0, 10);
 
   return knex("inventory")
-    .select("*")
-    .where("expiryDate", "<=", formattedThreeDaysFromNow)
+    .join("products", "inventory.itemID", "=", "products.productID")
+    .select("inventory.*", "products.Name")
+    .where("inventory.expiryDate", "<=", formattedThreeDaysFromNow)
     .then((productsExpiringSoon) => {
       if (productsExpiringSoon.length > 0) {
         return OKResponse(
