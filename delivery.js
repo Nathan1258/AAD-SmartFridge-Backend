@@ -211,23 +211,23 @@ async function isValidProductsArray(products) {
   }
   for (const product of products) {
     // Check if productID and quantity exist
-    if (!product.productID || !product.quantity) {
+    if (!product.itemID || !product.quantity) {
       return {
         valid: false,
         message:
-          "'productID' and 'quantity' should exist in each element of the array.",
+          "'itemID' and 'quantity' should exist in each element of the array.",
       };
     }
-    // Check if productID is a valid integer
+    // Check if itemID is a valid integer
     if (
-      typeof product.productID !== "number" ||
+      typeof product.itemID !== "number" ||
       product.productID <= 0 ||
-      !Number.isInteger(product.productID)
+      !Number.isInteger(product.itemID)
     ) {
       return {
         valid: false,
         message:
-          "one 'productID' item within the array is not a valid positive integer.",
+          "one 'itemID' item within the array is not a valid positive integer.",
       };
     }
     // Check if quantity is a valid integer
@@ -242,16 +242,16 @@ async function isValidProductsArray(products) {
           "one 'quantity' item within the array is not a valid positive integer.",
       };
     }
-    // Check if productID points to a valid product
-    if (!(await isProductValid(product.productID))) {
+    // Check if itemID points to a valid product
+    if (!(await isProductValid(product.itemID))) {
       return {
         valid: false,
         message:
-          "one give 'productID' item does not associate to a valid product.",
+          "one give 'itemID' item does not associate to a valid product.",
       };
     }
 
-    if (await isProductInOrder(product.productID, orderID)) {
+    if (await isProductInOrder(product.itemID, orderID)) {
       return {
         valid: false,
         message:

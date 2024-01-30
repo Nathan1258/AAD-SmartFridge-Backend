@@ -139,7 +139,7 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Permissions:** Requires admin privileges.
     - **Parameters:**
         - *accessPIN*: **integer**
-        - (Optional) *products*: **[{productID, quantity},...]**
+        - (Optional) *products*: **[{itemID, quantity},...]**
         - (Optional) *productID*: **integer**
         - (Optional) *quantity*: **integer**
 
