@@ -94,6 +94,12 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Query Parameters**
         - (Optional) *instock*: **boolean**
 
+- **Retrieve all items that are expiring soon:** `/v1/items/expiring`
+    - **Method:** POST
+    - **Description:** Returns an array of all items that are expiring within 3 days from current date.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+
 - **Return a specific item:** `/v1/items/fetch/<item-name>`
     - **Method:** POST
     - **Description:** Returns a specific Item's data in the system.
@@ -116,6 +122,22 @@ endpoint [here](https://aad-api.ellisn.com)
         - *accessPIN*: **integer**
         - *itemID*: **integer**
         - *quantity to remove*: **integer**
+
+### Delivery and ordering
+
+- **Get all deliveries:** `/v1/delivery/`
+    - **Method:** POST
+    - **Description:** Returns an array of all deliveries that have completed or are expecting to be completed
+    - **Parameters:**
+        - *accessPIN*: **integer**
+
+- **Add a product to this week's order:** `/v1/delivery/add`
+    - **Method:** POST
+    - **Description:** Adds a product to this week's order only if the product isn't already on the order.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - *productID*: **integer**
+        - *quantity*: **integer**
 
 ## User Verification Functions
 
