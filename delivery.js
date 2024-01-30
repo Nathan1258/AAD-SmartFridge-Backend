@@ -99,7 +99,7 @@ router.post("/", verify, async (req, res) => {
     });
 });
 
-router.post("/orders", verify, async (req, res) => {
+router.post("/order", verify, async (req, res) => {
   return knex("orders")
     .select("*")
     .where("orderID", generateOrderID())
