@@ -72,7 +72,9 @@ cron.schedule("0 8 * * 1", async () => {
 });
 
 // Run a task every 12 hours to process items near out of stock and automatically add to order
-cron.schedule("0 */12 * * *", async () => {
+
+// cron.schedule("0 */12 * * *", async () => {
+cron.schedule("39 20 * * *", async () => {
   console.log("Processing products near depletion");
   const currentOrderID = generateOrderID();
   await processLowQuantityProducts(currentOrderID);
@@ -465,11 +467,10 @@ async function processExpiredItems() {
     .where("inventory.expiryDate", "<=", formattedThreeDaysFromNow);
   for (const item of expiringItems) {
     await addToActivityLog(
-      null,
+      "",
       `Item ${item.Name} is expiring soon. Please check your expiring items to reorder.`,
     );
   }
-
   const expiredItems = await knex("inventory")
     .join("products", "inventory.itemID", "=", "products.productID")
     .select("products.Name")
@@ -478,19 +479,20 @@ async function processExpiredItems() {
   await knex("inventory").where("expiryDate", "<", currentDate).del();
 
   for (const item of expiredItems) {
+    console.log(`Removing ${item.Name} from inventory as it has expired`);
     await addToActivityLog(
-      null,
+      "",
       `Item ${item.Name} has been removed from the fridge as it has expired`,
     );
   }
+  console.log("done processing expired items");
 }
 
 async function processLowQuantityProducts(newOrderID) {
   try {
     const products = await knex("inventory")
-      .select("*")
-      .join("products", "inventory.productID", "=", "products.productID")
-      .select("orders.*", "products.Name")
+      .join("products", "inventory.itemID", "=", "products.productID")
+      .select("inventory.*", "products.Name")
       .where("quantity", "<", 3);
     for (const product of products) {
       const alreadyAdded = await isProductInOrder(product.itemID, newOrderID);
@@ -515,7 +517,7 @@ async function addLowQuantityProduct(product, orderID) {
     })
     .then(async (rows) => {
       await addToActivityLog(
-        null,
+        "",
         `Automatically reordered "${product.Name}" as quantity is less than 3.`,
       );
       return rows > 1;
