@@ -97,35 +97,82 @@ router.post("/", verify, async (req, res) => {
 });
 
 router.post("/add", verify, async (req, res) => {
-  const { productID, quantity } = req.body;
+  const { products, productID, quantity } = req.body;
   const orderID = generateOrderID();
+  let validArrayProvided = false;
 
-  if (!productID)
+  if (!products || (!productID && !quantity))
     return MalformedBodyResponse(
       res,
-      "'productID' is missing from request body.",
+      "'products' (an array of products) or an individual 'productID' + 'quantity' is expected in request body",
     );
-  if (!(await isProductValid(productID)))
-    return MalformedBodyResponse(res, "Given productID does not exist");
 
-  if (!quantity)
-    return MalformedBodyResponse(
-      res,
-      "'quantity' is missing from request body.",
-    );
+  if (products) {
+    const response = await isValidProductsArray(products);
+    if (response.valid) {
+      validArrayProvided = true;
+    } else {
+      return MalformedBodyResponse(res, response.message);
+    }
+  }
+
   if (
     typeof quantity !== "number" ||
     quantity <= 0 ||
-    !Number.isInteger(quantity)
+    (!Number.isInteger(quantity) && !validArrayProvided)
   ) {
     return MalformedBodyResponse(res, "'quantity' must be a positive integer.");
   }
 
-  if (await isProductInOrder(productID, orderID))
+  if (!validArrayProvided && (await isProductInOrder(productID, orderID)))
     return MalformedBodyResponse(
       res,
       "Product is already in this week's order",
     );
+
+  if (validArrayProvided) {
+    let productsAdded = [];
+
+    const insertPromises = products.map((product) => {
+      return knex("orders")
+        .insert({
+          orderID: orderID,
+          productID: product.productID,
+          quantity: product.quantity,
+          orderedAt: getCurrentTimestamp(),
+          status: "Processing",
+          triggerType: "User added",
+        })
+        .then((row) => {
+          if (row.length > 0) {
+            productsAdded.push(product);
+          }
+        })
+        .catch((error) => {
+          console.error(
+            "Could not add a product from products array to this weeks order: ",
+            error,
+          );
+        });
+    });
+
+    return Promise.all(insertPromises)
+      .then(() => {
+        return OKResponse(
+          res,
+          "Successfully added " +
+            productsAdded.length +
+            " products to this week's order",
+          productsAdded,
+        );
+      })
+      .catch((error) => {
+        return InternalServerErrorResponse(
+          res,
+          "An error occurred while adding products to this week's order. Please try again later.",
+        );
+      });
+  }
 
   return knex("orders")
     .insert({
@@ -154,6 +201,65 @@ router.post("/add", verify, async (req, res) => {
 });
 
 module.exports = router;
+
+async function isValidProductsArray(products) {
+  const orderID = generateOrderID();
+
+  if (!Array.isArray(products)) {
+    return { valid: false, message: "'products' is not a valid array." };
+  }
+  for (const product of products) {
+    // Check if productID and quantity exist
+    if (!product.productID || !product.quantity) {
+      return {
+        valid: false,
+        message:
+          "'productID' and 'quantity' should exist in each element of the array.",
+      };
+    }
+    // Check if productID is a valid integer
+    if (
+      typeof product.productID !== "number" ||
+      product.productID <= 0 ||
+      !Number.isInteger(product.productID)
+    ) {
+      return {
+        valid: false,
+        message:
+          "one 'productID' item within the array is not a valid positive integer.",
+      };
+    }
+    // Check if quantity is a valid integer
+    if (
+      typeof product.quantity !== "number" ||
+      product.quantity <= 0 ||
+      !Number.isInteger(product.quantity)
+    ) {
+      return {
+        valid: false,
+        message:
+          "one 'quantity' item within the array is not a valid positive integer.",
+      };
+    }
+    // Check if productID points to a valid product
+    if (!(await isProductValid(product.productID))) {
+      return {
+        valid: false,
+        message:
+          "one give 'productID' item does not associate to a valid product.",
+      };
+    }
+
+    if (await isProductInOrder(product.productID, orderID)) {
+      return {
+        valid: false,
+        message:
+          "One or more products provided in the array is already in this week's order.",
+      };
+    }
+  }
+  return { valid: true, message: "" };
+}
 
 function getWeekNumber(d) {
   d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));

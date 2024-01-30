@@ -133,11 +133,14 @@ endpoint [here](https://aad-api.ellisn.com)
 
 - **Add a product to this week's order:** `/v1/delivery/add`
     - **Method:** POST
-    - **Description:** Adds a product to this week's order only if the product isn't already on the order.
+    - **Description:** Adds a product to this week's order only if the product isn't already on the order. You can
+      specify either an array of products to be added or a single product by specifying a single 'productID' and '
+      quantity'.
     - **Parameters:**
         - *accessPIN*: **integer**
-        - *productID*: **integer**
-        - *quantity*: **integer**
+        - (Optional) *products*: **[{productID, quantity},...]**
+        - (Optional) *productID*: **integer**
+        - (Optional) *quantity*: **integer**
 
 ## User Verification Functions
 
