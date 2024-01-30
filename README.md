@@ -80,8 +80,20 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Description:** Logs an action to the activity log. If *uid* is not present then the current user performing the
       request will be used.
     - **Parameters:**
+        - *accessPIN*: **integer**
         - (Optional) *uid*: **int**
         - *action*: **string**
+
+- **Get activity Log:** `/v1/reports/fetch/logs`
+    - **Method:** POST
+    - **Description:** Returns activity log with given date range. If **dateStart** and **dateEnd** are not specified
+      then
+      all logs will be returned. Otherwise, if **dateStart** and **dateEnd** (both Unix timestamps) are present, then
+      only logs that have occured in that given time range will be returned.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - (Optional) *dateStart*: **integer**
+        - (Optional) *dateStart*: **integer**
 
 ### Items
 
