@@ -11,6 +11,7 @@ const {
   MalformedBodyResponse,
   OKResponse,
   InternalServerErrorResponse,
+  NotFoundResponse,
 } = require("./customResponses");
 
 // Scheduled stock analysis and order creation every Monday at 8AM
@@ -234,6 +235,40 @@ router.post("/add", verifyAdmin, async (req, res) => {
       return InternalServerErrorResponse(
         res,
         "Could not add product to this weeks order. Please try again later.",
+      );
+    });
+});
+
+router.post("/remove", verifyAdmin, async (req, res) => {
+  const { productID } = req.body;
+  const orderID = generateOrderID();
+
+  if (!productID)
+    return MalformedBodyResponse(
+      res,
+      "'productID' is expected in request body",
+    );
+
+  knex("orders")
+    .where({
+      orderID: orderID,
+      productID: productID,
+    })
+    .del()
+    .then((rowsAffected) => {
+      if (rowsAffected === 0) {
+        return NotFoundResponse(
+          res,
+          "Item specified was not found within this week's order.",
+        );
+      }
+      return OKResponse(res, "Order successfully deleted");
+    })
+    .catch((error) => {
+      console.error("Error deleting order: ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Error occurred while deleting order. Please try again later.",
       );
     });
 });

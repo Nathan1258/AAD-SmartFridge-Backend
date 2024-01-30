@@ -161,6 +161,14 @@ endpoint [here](https://aad-api.ellisn.com)
         - (Optional) *productID*: **integer**
         - (Optional) *quantity*: **integer**
 
+- **Remove a product from this week's order:** `/v1/delivery/remove`
+    - **Method:** POST
+    - **Description:** Removes a product from this week's order.
+    - **Permissions:** Requires admin privileges.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - (Optional) *productID*: **integer**
+
 ## User Verification Functions
 
 In the `verify.js` file, you'll find functions for verifying user permissions:
