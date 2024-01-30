@@ -105,8 +105,7 @@ router.post("/order", verify, async (req, res) => {
     .select("*")
     .where("orderID", orderID)
     .then((orders) => {
-      console.log(orders);
-      if (orders.count > 0) {
+      if (orders.length > 0) {
         return OKResponse(
           res,
           "Order for current week has been returned",
