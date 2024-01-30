@@ -454,17 +454,33 @@ async function processOrderTotalAmount(orderID) {
 
 async function processExpiredItems() {
   const currentDate = new Date().toISOString().slice(0, 19).replace("T", " ");
+  const threeDaysFromNow = new Date();
+  threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+  threeDaysFromNow.setHours(0, 0, 0, 0);
+  const formattedThreeDaysFromNow = threeDaysFromNow.toISOString().slice(0, 10);
+
+  const expiringItems = await knex("inventory")
+    .join("products", "inventory.itemID", "=", "products.productID")
+    .select("inventory.*", "products.Name")
+    .where("inventory.expiryDate", "<=", formattedThreeDaysFromNow);
+  for (const item of expiringItems) {
+    await addToActivityLog(
+      null,
+      `Item ${item.Name} is expiring soon. Please check your expiring items to reorder.`,
+    );
+  }
 
   const expiredItems = await knex("inventory")
-    .where("expiryDate", "<", currentDate)
-    .select("itemID");
+    .join("products", "inventory.itemID", "=", "products.productID")
+    .select("products.Name")
+    .where("expiryDate", "<", currentDate);
 
   await knex("inventory").where("expiryDate", "<", currentDate).del();
 
   for (const item of expiredItems) {
     await addToActivityLog(
       null,
-      `Item ${item.itemID} has been removed from the fridge as it has expired`,
+      `Item ${item.Name} has been removed from the fridge as it has expired`,
     );
   }
 }
@@ -473,6 +489,8 @@ async function processLowQuantityProducts(newOrderID) {
   try {
     const products = await knex("inventory")
       .select("*")
+      .join("products", "inventory.productID", "=", "products.productID")
+      .select("orders.*", "products.Name")
       .where("quantity", "<", 3);
     for (const product of products) {
       const alreadyAdded = await isProductInOrder(product.itemID, newOrderID);
@@ -485,7 +503,7 @@ async function processLowQuantityProducts(newOrderID) {
   }
 }
 
-function addLowQuantityProduct(product, orderID) {
+async function addLowQuantityProduct(product, orderID) {
   return knex("orders")
     .insert({
       orderID: orderID,
@@ -495,7 +513,11 @@ function addLowQuantityProduct(product, orderID) {
       status: "Processing",
       triggerType: "System trigger",
     })
-    .then((rows) => {
+    .then(async (rows) => {
+      await addToActivityLog(
+        null,
+        `Automatically reordered "${product.Name}" as quantity is less than 3.`,
+      );
       return rows > 1;
     })
     .catch((error) => {
