@@ -136,6 +136,7 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Description:** Adds a product to this week's order only if the product isn't already on the order. You can
       specify either an array of products to be added or a single product by specifying a single 'productID' and '
       quantity'.
+    - **Permissions:** Requires admin privileges.
     - **Parameters:**
         - *accessPIN*: **integer**
         - (Optional) *products*: **[{productID, quantity},...]**

@@ -101,11 +101,12 @@ router.post("/add", verifyAdmin, async (req, res) => {
   const orderID = generateOrderID();
   let validArrayProvided = false;
 
-  if (!products || (!productID && !quantity))
+  if (!products || (!productID && !quantity)) {
     return MalformedBodyResponse(
       res,
       "'products' (an array of products) or an individual 'productID' + 'quantity' is expected in request body",
     );
+  }
 
   if (products) {
     const response = await isValidProductsArray(products);
