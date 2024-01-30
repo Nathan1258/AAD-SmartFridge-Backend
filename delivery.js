@@ -99,6 +99,29 @@ router.post("/", verify, async (req, res) => {
     });
 });
 
+router.post("/orders", verify, async (req, res) => {
+  return knex("orders")
+    .select("*")
+    .where("orderID", generateOrderID())
+    .then((orders) => {
+      if (orders.count > 0) {
+        return OKResponse(
+          res,
+          "Order for current week has been returned",
+          orders,
+        );
+      }
+      return OKResponse(res, "Order is not available", []);
+    })
+    .catch((error) => {
+      console.log("Could not get order: ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Could not get order. Please try again later",
+      );
+    });
+});
+
 router.post("/add", verifyAdmin, async (req, res) => {
   const { products, productID, quantity } = req.body;
   const orderID = generateOrderID();
