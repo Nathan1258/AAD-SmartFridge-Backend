@@ -105,7 +105,7 @@ router.post("/order", verify, async (req, res) => {
   return knex("orders")
     .select("*")
     .join("products", "orders.productID", "=", "products.productID")
-    .select("orders.*", "products.Name")
+    .select("orders.*", "products.Name", "products.Price")
     .where("orderID", orderID)
     .then((orders) => {
       if (orders.length > 0) {
