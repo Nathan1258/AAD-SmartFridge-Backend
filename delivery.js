@@ -100,9 +100,10 @@ router.post("/", verify, async (req, res) => {
 });
 
 router.post("/order", verify, async (req, res) => {
+  const orderID = parseInt(generateOrderID()).toString();
   return knex("orders")
     .select("*")
-    .where("orderID", generateOrderID())
+    .where("orderID", orderID)
     .then((orders) => {
       if (orders.count > 0) {
         return OKResponse(
