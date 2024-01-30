@@ -117,19 +117,24 @@ router.post("/add", verifyAdmin, async (req, res) => {
     }
   }
 
-  if (
-    typeof quantity !== "number" ||
-    quantity <= 0 ||
-    (!Number.isInteger(quantity) && !validArrayProvided)
-  ) {
-    return MalformedBodyResponse(res, "'quantity' must be a positive integer.");
+  if (!validArrayProvided) {
+    // Check single productID and quantity body items as array as not provided
+    if (
+      typeof quantity !== "number" ||
+      quantity <= 0 ||
+      !Number.isInteger(quantity)
+    ) {
+      return MalformedBodyResponse(
+        res,
+        "'quantity' must be a positive integer.",
+      );
+    }
+    if (!validArrayProvided && (await isProductInOrder(productID, orderID)))
+      return MalformedBodyResponse(
+        res,
+        "Product is already in this week's order",
+      );
   }
-
-  if (!validArrayProvided && (await isProductInOrder(productID, orderID)))
-    return MalformedBodyResponse(
-      res,
-      "Product is already in this week's order",
-    );
 
   if (validArrayProvided) {
     let productsAdded = [];
