@@ -105,6 +105,7 @@ router.post("/order", verify, async (req, res) => {
     .select("*")
     .where("orderID", orderID)
     .then((orders) => {
+      console.log(orders);
       if (orders.count > 0) {
         return OKResponse(
           res,
