@@ -273,6 +273,45 @@ router.post("/remove", verifyAdmin, async (req, res) => {
     });
 });
 
+router.post("/edit", verifyAdmin, async (req, res) => {
+  const { productID, quantity } = req.body;
+  const orderID = generateOrderID();
+
+  if (!productID)
+    return MalformedBodyResponse(
+      res,
+      "'productID' is expected in request body",
+    );
+
+  if (!quantity)
+    return MalformedBodyResponse(res, "'quantity' is expected in request body");
+
+  knex("orders")
+    .update({
+      quantity: quantity,
+    })
+    .where({
+      orderID: orderID,
+      productID: productID,
+    })
+    .then((rowsAffected) => {
+      if (rowsAffected === 0) {
+        return NotFoundResponse(
+          res,
+          "Item specified was not found within this week's order.",
+        );
+      }
+      return OKResponse(res, "Order successfully updated");
+    })
+    .catch((error) => {
+      console.error("Error updating order: ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Error occurred while updating order. Please try again later.",
+      );
+    });
+});
+
 module.exports = router;
 
 async function isValidProductsArray(products) {

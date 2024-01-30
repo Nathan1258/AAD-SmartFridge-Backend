@@ -167,7 +167,16 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Permissions:** Requires admin privileges.
     - **Parameters:**
         - *accessPIN*: **integer**
-        - (Optional) *productID*: **integer**
+        - *productID*: **integer**
+
+- **Edit a product's quantity from this week's order:** `/v1/delivery/edit`
+    - **Method:** POST
+    - **Description:** Edits a product's quantity from this week's order.
+    - **Permissions:** Requires admin privileges.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - *productID*: **integer**
+        - *quantity*: **integer**
 
 ## User Verification Functions
 
