@@ -76,6 +76,9 @@ cron.schedule("0 */12 * * *", async () => {
   const currentOrderID = generateOrderID();
   await processLowQuantityProducts(currentOrderID);
   console.log("Processing of products near depletion has completed.");
+  console.log("Removing items that have expired");
+  await processExpiredItems();
+  console.log("Removed items that have expired");
 });
 
 router.post("/", verify, async (req, res) => {
@@ -343,6 +346,23 @@ async function processOrderTotalAmount(orderID) {
     });
   } catch (error) {
     console.error("Could not fetch total order amount", error);
+  }
+}
+
+async function processExpiredItems() {
+  const currentDate = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+  const expiredItems = await knex("inventory")
+    .where("expiryDate", "<", currentDate)
+    .select("itemID");
+
+  await knex("inventory").where("expiryDate", "<", currentDate).del();
+
+  for (const item of expiredItems) {
+    await addToActivityLog(
+      null,
+      `Item ${item.itemID} has been removed from the fridge as it has expired`,
+    );
   }
 }
 
