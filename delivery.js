@@ -101,7 +101,7 @@ router.post("/add", verifyAdmin, async (req, res) => {
   const orderID = generateOrderID();
   let validArrayProvided = false;
 
-  if (!products || (!productID && !quantity)) {
+  if ((!products || products.length === 0) && (!productID || !quantity)) {
     return MalformedBodyResponse(
       res,
       "'products' (an array of products) or an individual 'productID' + 'quantity' is expected in request body",
@@ -138,7 +138,7 @@ router.post("/add", verifyAdmin, async (req, res) => {
       return knex("orders")
         .insert({
           orderID: orderID,
-          productID: product.productID,
+          productID: product.itemID,
           quantity: product.quantity,
           orderedAt: getCurrentTimestamp(),
           status: "Processing",
