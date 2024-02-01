@@ -72,9 +72,7 @@ cron.schedule("0 8 * * 1", async () => {
 });
 
 // Run a task every 12 hours to process items near out of stock and automatically add to order
-
-// cron.schedule("0 */12 * * *", async () => {
-cron.schedule("39 20 * * *", async () => {
+cron.schedule("0 */12 * * *", async () => {
   console.log("Processing products near depletion");
   const currentOrderID = generateOrderID();
   await processLowQuantityProducts(currentOrderID);

@@ -43,23 +43,25 @@ router.post("/register", async (req, res) => {
   if (access && allowedAccess.includes(access.toLowerCase())) {
     insertData.access = access.toLowerCase();
   }
-  knex("users")
+  return knex("users")
     .insert(insertData)
-    .then((rows) => {
-      if (rows <= 0) {
+    .then((result) => {
+      const uid = result[0];
+      if (!uid) {
         return InternalServerErrorResponse(
           res,
           "Unable to create user. Please try again.",
         );
       }
+      // Proceed to use uid as necessary
       return OKResponse(res, "User successfully created", {
-        uid: result[0],
-        first_name: first_name,
-        last_name: last_name,
+        uid: uid,
+        first_name: insertData.first_name,
+        last_name: insertData.last_name,
       });
     })
     .catch((error) => {
-      console.error("Error registering a user: ", e);
+      console.error("Error registering a user: ", error);
       return InternalServerErrorResponse(
         res,
         "Unable to create user. Please try again.",
