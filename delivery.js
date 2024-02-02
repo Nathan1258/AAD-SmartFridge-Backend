@@ -181,7 +181,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     });
 });
 
-router.post("/order", verify, async (req, res) => {
+router.post("/order", verify || verifyDelivery, async (req, res) => {
   let orderID = parseInt(generateOrderID()).toString();
   if (req.body.orderID) {
     orderID = req.body.orderID;
