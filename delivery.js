@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { verify, verifyAdmin } = require("./verify");
+const { verify, verifyAdmin, verifyDelivery } = require("./verify");
 const { knex } = require("./sql");
 const cron = require("node-cron");
 const {
@@ -98,6 +98,10 @@ router.post("/", verify, async (req, res) => {
         "Could not get all deliveries. Please try again later",
       );
     });
+});
+
+router.post("/verify", verifyDelivery, async (req, res) => {
+  return OKResponse(res, "Delivery data has been returned", req.body.delivery);
 });
 
 router.post("/order", verify, async (req, res) => {

@@ -5,6 +5,22 @@ const {
 } = require("./customResponses");
 
 // Verification if the requesting user is valid with admin privileges
+async function verifyDelivery(req, res, next) {
+  try {
+    const tokenResponse = await checkDeliveryToken(req, res);
+    if (tokenResponse.code !== 200)
+      return res.status(tokenResponse.code).json(tokenResponse);
+    next();
+  } catch (e) {
+    console.error("Error verifying delivery: ", e);
+    return InternalServerErrorResponse(
+      res,
+      "Unable to verify delivery. Please try again",
+    );
+  }
+}
+
+// Verification if the requesting user is valid with admin privileges
 async function verifyAdmin(req, res, next) {
   try {
     const tokenResponse = await checkToken(req, res);
@@ -62,7 +78,36 @@ async function verify(req, res, next) {
   }
 }
 
-module.exports = { verify, verifyAdmin, verifyHealth };
+module.exports = { verify, verifyAdmin, verifyHealth, verifyDelivery };
+
+const checkDeliveryToken = async (req, res) => {
+  const accessPIN = req.body.accessPIN;
+
+  if (!accessPIN) {
+    return {
+      code: 401,
+      message: "'accessPIN' parameter is missing from request body",
+      data: null,
+    };
+  }
+
+  try {
+    const isDelivery = await knex("deliveries")
+      .select("*")
+      .where("accessCode", accessPIN);
+
+    if (isDelivery.length <= 0) {
+      return { code: 401, message: "accessCode is invalid.", data: null };
+    }
+    req.body.delivery = isDelivery[0];
+
+    return { code: 200, message: "Token is valid", data: isDelivery[0] };
+  } catch (error) {
+    console.error(error);
+    console.log("Could not get delivery session: ", error);
+    return { code: 500, message: "Could not get delivery session", data: null };
+  }
+};
 
 const checkToken = async (req, res) => {
   const accessPIN = req.body.accessPIN;

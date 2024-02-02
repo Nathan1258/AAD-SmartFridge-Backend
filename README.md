@@ -143,6 +143,12 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Parameters:**
         - *accessPIN*: **integer**
 
+- **Verify and get a delivery:** `/v1/delivery/verify`
+    - **Method:** POST
+    - **Description:** Returns a delivery if it is valid
+    - **Parameters:**
+        - *accessPIN*: **integer**
+
 - **Get current week's order:** `/v1/delivery/order`
     - **Method:** POST
     - **Description:** Returns an array of products that are in the current week's order.
