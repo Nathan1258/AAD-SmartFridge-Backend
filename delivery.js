@@ -101,6 +101,12 @@ router.post("/", verify, async (req, res) => {
 });
 
 router.post("/verify", verifyDelivery, async (req, res) => {
+  knex("deliveries")
+    .update({ status: "Delivery in process" })
+    .where("deliveryID", req.body.delivery.deliveryID)
+    .then((data) => {
+      if (data.length <= 0) console.log("Could not update delivery status");
+    });
   return OKResponse(res, "Delivery data has been returned", req.body.delivery);
 });
 
