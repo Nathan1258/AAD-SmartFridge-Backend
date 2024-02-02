@@ -170,10 +170,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
         async (item) =>
           await knex("orders")
             .update({ status: "Delivered" })
-            .where({ orderID: orderID, productID: item.productID })
-            .catch((error) => {
-              console.error("Error updating delivered item: ", error);
-            }),
+            .where({ orderID: orderID, productID: item.productID }),
       ),
     );
     if (undeliveredItems && undeliveredItems.length > 0) {
@@ -182,10 +179,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
           async (item) =>
             await knex("orders")
               .update({ status: "Undelivered" })
-              .where({ orderID: orderID, productID: item.productID })
-              .catch((error) => {
-                console.error("Error updating undelivered item: ", error);
-              }),
+              .where({ orderID: orderID, productID: item.productID }),
         ),
       );
     }
