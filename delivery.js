@@ -169,7 +169,10 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
       deliveredItems.map((item) =>
         knex("orders")
           .update({ status: "Delivered" })
-          .where({ orderID: orderID, productID: item.productID }),
+          .where({ orderID: orderID, productID: item.productID })
+          .catch((error) => {
+            console.error("Error updating delivered item: ", error);
+          }),
       ),
     );
     if (undeliveredItems && undeliveredItems.length > 0) {
@@ -177,7 +180,10 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
         undeliveredItems.map((item) =>
           knex("orders")
             .update({ status: "Undelivered" })
-            .where({ orderID: orderID, productID: item.productID }),
+            .where({ orderID: orderID, productID: item.productID })
+            .catch((error) => {
+              console.error("Error updating undelivered item: ", error);
+            }),
         ),
       );
     }
@@ -190,7 +196,10 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
         deliveryNotes: deliveryNotes,
         isDelivered: true,
       })
-      .where("deliveryID", deliveryID);
+      .where("deliveryID", deliveryID)
+      .catch((error) => {
+        console.error("Error updating delivery: ", error);
+      });
 
     await addToActivityLogNoReq(
       `Order ${orderID} has been marked as delivered`,
