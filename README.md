@@ -164,9 +164,10 @@ endpoint [here](https://aad-api.ellisn.com)
 
 - **Get current week's order:** `/v1/delivery/order`
     - **Method:** POST
-    - **Description:** Returns an array of products that are in the current week's order.
+    - **Description:** Returns an array of products that are in the current week's order if orderID is not given.
     - **Parameters:**
         - *accessPIN*: **integer**
+        - (Optional) *orderID*: **integer**
 
 - **Add a product to this week's order:** `/v1/delivery/add`
     - **Method:** POST

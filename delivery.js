@@ -182,7 +182,10 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
 });
 
 router.post("/order", verify, async (req, res) => {
-  const orderID = parseInt(generateOrderID()).toString();
+  let orderID = parseInt(generateOrderID()).toString();
+  if (req.body.orderID) {
+    orderID = req.body.orderID;
+  }
   return knex("orders")
     .select("*")
     .join("products", "orders.productID", "=", "products.productID")
