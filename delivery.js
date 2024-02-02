@@ -149,7 +149,13 @@ router.post("/note", verifyDelivery, async (req, res) => {
 });
 
 router.post("/delivered", verifyDelivery, async (req, res) => {
-  const { orderID, deliveredItems, undeliveredItems } = req.body;
+  const {
+    deliveryID,
+    orderID,
+    deliveredItems,
+    undeliveredItems,
+    deliveryNotes,
+  } = req.body;
 
   if (!deliveredItems) {
     return MalformedBodyResponse(
@@ -175,6 +181,16 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
         ),
       );
     }
+
+    knex("deliveries")
+      .update({
+        accessCode: null,
+        itemsUndelivered: undeliveredItems.length,
+        status: "Delivered",
+        deliveryNotes: deliveryNotes,
+        isDelivered: true,
+      })
+      .where("deliveryID", deliveryID);
 
     await addToActivityLogNoReq(
       `Order ${orderID} has been marked as delivered`,
