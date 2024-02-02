@@ -73,14 +73,20 @@ const convertToTimestamp = (dateString) => {
 };
 
 const addToActivityLog = async (req, actionHappened) => {
-  let data;
-  if (!req) {
-    data = { action: actionHappened };
-  } else {
-    data = { uid: req.body.user.uid, action: actionHappened };
-  }
   return knex("activity")
-    .insert(data)
+    .insert({ uid: req.body.user.uid, action: actionHappened })
+    .then((rows) => {
+      return rows.length > 0;
+    })
+    .catch((error) => {
+      console.log("Error adding to activity: ", error);
+      return false;
+    });
+};
+
+const addToActivityLog = async (actionHappened) => {
+  return knex("activity")
+    .insert({ action: actionHappened })
     .then((rows) => {
       return rows.length > 0;
     })

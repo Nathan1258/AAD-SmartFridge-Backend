@@ -149,6 +149,19 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Parameters:**
         - *accessPIN*: **integer**
 
+- **Add a note to the delivery:** `/v1/delivery/verify`
+    - **Method:** POST
+    - **Description:** Updates the note of the delivery
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - *note*: **string**
+
+- **Mark the delivery as delivered and ready to be checked:** `/v1/delivery/delivered`
+    - **Method:** POST
+    - **Description:** Updates the delivery status to delivered and sends notification to head chef to check.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+
 - **Get current week's order:** `/v1/delivery/order`
     - **Method:** POST
     - **Description:** Returns an array of products that are in the current week's order.
