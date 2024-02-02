@@ -181,7 +181,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     });
 });
 
-router.post("/order", verify || verifyDelivery, async (req, res) => {
+router.post("/order", verify, async (req, res) => {
   let orderID = parseInt(generateOrderID()).toString();
   if (req.body.orderID) {
     orderID = req.body.orderID;
@@ -191,6 +191,33 @@ router.post("/order", verify || verifyDelivery, async (req, res) => {
     .join("products", "orders.productID", "=", "products.productID")
     .select("orders.*", "products.Name", "products.Price")
     .where("orderID", orderID)
+    .then((orders) => {
+      if (orders.length > 0) {
+        return OKResponse(
+          res,
+          "Order for current week has been returned",
+          orders,
+        );
+      }
+      return OKResponse(res, "Order is not available", []);
+    })
+    .catch((error) => {
+      console.log("Could not get order: ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Could not get order. Please try again later",
+      );
+    });
+});
+
+router.post("/final-order", verifyDelivery, async (req, res) => {
+  if (!req.body.orderID)
+    return MalformedBodyResponse(res, "'orderID' is expected in request body");
+  return knex("orders")
+    .select("*")
+    .join("products", "orders.productID", "=", "products.productID")
+    .select("orders.*", "products.Name", "products.Price")
+    .where("orderID", req.body.orderID)
     .then((orders) => {
       if (orders.length > 0) {
         return OKResponse(
