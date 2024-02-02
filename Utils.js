@@ -84,7 +84,7 @@ const addToActivityLog = async (req, actionHappened) => {
     });
 };
 
-const addToActivityLog = async (actionHappened) => {
+const addToActivityLogNoReq = async (actionHappened) => {
   return knex("activity")
     .insert({ action: actionHappened })
     .then((rows) => {
@@ -126,6 +126,7 @@ module.exports = {
   getNextDayMidnightTimestamp,
   getUserAccessFromInt,
   addToActivityLog,
+  addToActivityLogNoReq,
   convertToTimestamp,
   getCurrentTimestamp,
 };

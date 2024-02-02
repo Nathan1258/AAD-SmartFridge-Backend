@@ -5,7 +5,7 @@ const cron = require("node-cron");
 const {
   getCurrentTimestamp,
   generateUniqueAccessPIN,
-  addToActivityLog,
+  addToActivityLogNoReq,
 } = require("./Utils");
 const {
   MalformedBodyResponse,
@@ -22,7 +22,7 @@ cron.schedule("0 8 * * 1", async () => {
   const lastWeekOrderID = generateOrderID(1);
   if ((await processDelivery(lastWeekOrderID)) === true) {
     console.log("Delivery: " + lastWeekOrderID + " has processed successfully");
-    await addToActivityLog(
+    await addToActivityLogNoReq(
       "Last week's order has been processed for delivery.",
     );
   } else {
@@ -31,7 +31,7 @@ cron.schedule("0 8 * * 1", async () => {
         lastWeekOrderID +
         " has not processed successfully. Check logs",
     );
-    await addToActivityLog(
+    await addToActivityLogNoReq(
       "Could not process last week's delivery. Contact your admin.",
     );
   }
@@ -106,9 +106,11 @@ router.post("/verify", verifyDelivery, async (req, res) => {
   knex("deliveries")
     .update({ status: "Delivery in process" })
     .where("deliveryID", deliveryID)
-    .then((data) => {
+    .then(async (data) => {
       if (data.length <= 0) console.log("Could not update delivery status");
-      addToActivityLog(`Order ${req.body.delivery.orderID} has changed status`);
+      await addToActivityLogNoReq(
+        `Order ${req.body.delivery.orderID} has changed status`,
+      );
     })
     .catch((error) => {
       console.error("Error updating delivery status", error);
@@ -126,13 +128,13 @@ router.post("/note", verifyDelivery, async (req, res) => {
   return knex("deliveries")
     .update({ deliveryNotes: deliveryNote })
     .where("deliveryID", deliveryID)
-    .then((data) => {
+    .then(async (data) => {
       if (data.length <= 0)
         return InternalServerErrorResponse(
           res,
           "Unable to update delivery note. Please try again later",
         );
-      addToActivityLog(
+      await addToActivityLogNoReq(
         `Order ${req.body.delivery.orderID} has had its notes updated`,
       );
       return OKResponse(res, "Delivery note successfully updated");
@@ -152,7 +154,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
   knex("deliveries")
     .update({ status: "Delivered", isDelivered: 1, accessCode: null })
     .where("deliveryID", deliveryID)
-    .then((data) => {
+    .then(async (data) => {
       if (data.length <= 0) {
         console.error(
           `Could not set delivery ${deliveryID} status to delivered.`,
@@ -162,7 +164,9 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
           `Could not set delivery ${deliveryID} status to delivered.`,
         );
       }
-      addToActivityLog(`Order ${req.body.delivery.orderID} has been delivered`);
+      await addToActivityLogNoReq(
+        `Order ${req.body.delivery.orderID} has been delivered`,
+      );
       return OKResponse(
         res,
         `Delivery ${deliveryID} has been set to delivered`,
@@ -541,8 +545,7 @@ async function processExpiredItems() {
     .select("inventory.*", "products.Name")
     .where("inventory.expiryDate", "<=", formattedThreeDaysFromNow);
   for (const item of expiringItems) {
-    await addToActivityLog(
-      "",
+    await addToActivityLogNoReq(
       `Item ${item.Name} is expiring soon. Please check your expiring items to reorder.`,
     );
   }
@@ -555,8 +558,7 @@ async function processExpiredItems() {
 
   for (const item of expiredItems) {
     console.log(`Removing ${item.Name} from inventory as it has expired`);
-    await addToActivityLog(
-      "",
+    await addToActivityLogNoReq(
       `Item ${item.Name} has been removed from the fridge as it has expired`,
     );
   }
@@ -591,8 +593,7 @@ async function addLowQuantityProduct(product, orderID) {
       triggerType: "System trigger",
     })
     .then(async (rows) => {
-      await addToActivityLog(
-        "",
+      await addToActivityLogNoReq(
         `Automatically reordered "${product.Name}" as quantity is less than 3.`,
       );
       return rows > 1;
