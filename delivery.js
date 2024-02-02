@@ -149,36 +149,44 @@ router.post("/note", verifyDelivery, async (req, res) => {
 });
 
 router.post("/delivered", verifyDelivery, async (req, res) => {
-  const deliveryID = req.body.delivery.deliveryID;
+  const { orderID, deliveredItems, undeliveredItems } = req.body;
 
-  knex("deliveries")
-    .update({ status: "Delivered", isDelivered: 1, accessCode: null })
-    .where("deliveryID", deliveryID)
-    .then(async (data) => {
-      if (data.length <= 0) {
-        console.error(
-          `Could not set delivery ${deliveryID} status to delivered.`,
-        );
-        return InternalServerErrorResponse(
-          res,
-          `Could not set delivery ${deliveryID} status to delivered.`,
-        );
-      }
-      await addToActivityLogNoReq(
-        `Order ${req.body.delivery.orderID} has been delivered`,
+  if (!deliveredItems) {
+    return MalformedBodyResponse(
+      res,
+      "'deliveredItems' array is expected in the request body.",
+    );
+  }
+
+  try {
+    await Promise.all(
+      deliveredItems.map((item) =>
+        knex("orders")
+          .update({ status: "Delivered" })
+          .where({ orderID: orderID, productID: item.productID }),
+      ),
+    );
+    if (undeliveredItems && undeliveredItems.length > 0) {
+      await Promise.all(
+        undeliveredItems.map((item) =>
+          knex("orders")
+            .update({ status: "Undelivered" })
+            .where({ orderID: orderID, productID: item.productID }),
+        ),
       );
-      return OKResponse(
-        res,
-        `Delivery ${deliveryID} has been set to delivered`,
-      );
-    })
-    .catch((error) => {
-      console.error("Error updating delivery status", error);
-      return InternalServerErrorResponse(
-        res,
-        `Could not set delivery ${deliveryID} status to delivered.`,
-      );
-    });
+    }
+
+    await addToActivityLogNoReq(
+      `Order ${orderID} has been marked as delivered`,
+    );
+    return OKResponse(res, "Order statuses successfully updated.");
+  } catch (error) {
+    console.error("Error updating order statuses", error);
+    return InternalServerErrorResponse(
+      res,
+      "Unable to update order statuses. Please try again later.",
+    );
+  }
 });
 
 router.post("/order", verify, async (req, res) => {
