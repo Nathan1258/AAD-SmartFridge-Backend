@@ -164,105 +164,80 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     );
   }
 
-  console.log(`ORDER ID: ${orderID}`);
+  return knex
+    .transaction(async (trx) => {
+      try {
+        const updates = [];
 
-  for (const product of deliveredItems) {
-    await updateDeliveredItem(orderID, product.productID);
-  }
+        deliveredItems.forEach((product) => {
+          const updatePromise = trx("orders")
+            .update({ status: "Delivered" })
+            .where({
+              orderID: parseInt(orderID),
+              productID: parseInt(product.productID),
+            })
+            .then((rows) => console.log(`Rows affected ${rows}`));
+          updates.push(updatePromise);
+        });
 
-  return OKResponse(res, "done");
+        if (undeliveredItems && undeliveredItems.length > 0) {
+          undeliveredItems.forEach((product) => {
+            const updatePromise = trx("orders")
+              .update({ status: "Undelivered" })
+              .where({
+                orderID: parseInt(orderID),
+                productID: parseInt(product.productID),
+              })
+              .then((rows) => console.log(`Rows affected ${rows}`));
+            updates.push(updatePromise);
+          });
+        }
 
-  // return knex
-  //   .transaction(async (trx) => {
-  //     try {
-  //       const updates = [];
-  //
-  //       deliveredItems.forEach((product) => {
-  //         const updatePromise = trx("orders")
-  //           .update({ status: "Delivered" })
-  //           .where({
-  //             orderID: parseInt(orderID),
-  //             productID: parseInt(product.productID),
-  //           })
-  //           .then((rows) => console.log(`Rows affected ${rows}`));
-  //         updates.push(updatePromise);
-  //       });
-  //
-  //       if (undeliveredItems && undeliveredItems.length > 0) {
-  //         undeliveredItems.forEach((product) => {
-  //           const updatePromise = trx("orders")
-  //             .update({ status: "Undelivered" })
-  //             .where({
-  //               orderID: parseInt(orderID),
-  //               productID: parseInt(product.productID),
-  //             })
-  //             .then((rows) => console.log(`Rows affected ${rows}`));
-  //           updates.push(updatePromise);
-  //         });
-  //       }
-  //
-  //       await Promise.all(updates);
-  //
-  //       await trx("deliveries")
-  //         .update({
-  //           accessCode: null,
-  //           itemsUndelivered: undeliveredItems.length,
-  //           status: "Delivered",
-  //           deliveryNotes: deliveryNotes,
-  //           isDelivered: true,
-  //         })
-  //         .where("deliveryID", parseInt(deliveryID))
-  //         .then((rows) => console.log(`Rows affected ${rows}`));
-  //
-  //       await trx.commit();
-  //
-  //       await addToActivityLogNoReq(
-  //         `Order ${orderID} has been marked as delivered`,
-  //       );
-  //       console.log(
-  //         "Delivery and orders updated successfully, and logged to activity log.",
-  //       );
-  //       return OKResponse(res, "Order has successfully been updated");
-  //     } catch (error) {
-  //       await trx.rollback();
-  //       await addToActivityLogNoReq(
-  //         `Order ${orderID} has had an error in processing. Please contact your admin for more information`,
-  //       );
-  //       console.error(
-  //         "Transaction failed, rolled back, and logged error to activity log: ",
-  //         error,
-  //       );
-  //       return InternalServerErrorResponse(
-  //         res,
-  //         "Order could not be updated. Please try again later.",
-  //       );
-  //     }
-  //   })
-  //   .catch((error) => {
-  //     console.error("An unexpected error occurred: ", error);
-  //     return InternalServerErrorResponse(
-  //       res,
-  //       "Order could not be updated. Please try again later.",
-  //     );
-  //   });
-});
+        await Promise.all(updates);
 
-const updateDeliveredItem = async (orderID, productID) => {
-  console.log(`Updating orderID: ${orderID}, productID: ${productID}`);
-  return knex("orders")
-    .update({ status: "Delivered" })
-    .where({
-      orderID: parseInt(orderID),
-      productID: parseInt(productID),
-    })
-    .then((rows) => {
-      console.log(`Affected rows: ${rows}`);
+        await trx("deliveries")
+          .update({
+            accessCode: null,
+            itemsUndelivered: undeliveredItems.length,
+            status: "Delivered",
+            deliveryNotes: deliveryNotes,
+            isDelivered: true,
+          })
+          .where("deliveryID", parseInt(deliveryID))
+          .then((rows) => console.log(`Rows affected ${rows}`));
+
+        await trx.commit();
+
+        await addToActivityLogNoReq(
+          `Order ${orderID} has been marked as delivered`,
+        );
+        console.log(
+          "Delivery and orders updated successfully, and logged to activity log.",
+        );
+        return OKResponse(res, "Order has successfully been updated");
+      } catch (error) {
+        await trx.rollback();
+        await addToActivityLogNoReq(
+          `Order ${orderID} has had an error in processing. Please contact your admin for more information`,
+        );
+        console.error(
+          "Transaction failed, rolled back, and logged error to activity log: ",
+          error,
+        );
+        return InternalServerErrorResponse(
+          res,
+          "Order could not be updated. Please try again later.",
+        );
+      }
     })
     .catch((error) => {
-      console.log("Error adding to activity: ", error);
-      return false;
+      console.error("An unexpected error occurred: ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Order could not be updated. Please try again later.",
+      );
     });
-};
+});
 
 router.post("/order", verify, async (req, res) => {
   let orderID = parseInt(generateOrderID()).toString();
