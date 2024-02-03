@@ -157,6 +157,8 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     deliveryNotes,
   } = req.body;
 
+  console.log("YAY");
+
   if (!deliveredItems) {
     return MalformedBodyResponse(
       res,
@@ -164,23 +166,30 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     );
   }
 
+  console.log("YAY2");
+  console.log(deliveryID);
+  console.log(orderID);
+  console.log(deliveryNotes);
+  console.log(deliveredItems);
+  console.log(undeliveredItems);
+
   try {
     await Promise.all(
-      deliveredItems.map(
-        async (item) =>
-          await knex("orders")
-            .update({ status: "Delivered" })
-            .where({ orderID: orderID, productID: item.productID }),
-      ),
+      deliveredItems.map((item) => {
+        console.log(orderID, item.productID, item);
+        knex("orders")
+          .update({ status: "Delivered" })
+          .where({ orderID: orderID, productID: item.productID });
+      }),
     );
     if (undeliveredItems && undeliveredItems.length > 0) {
       await Promise.all(
-        undeliveredItems.map(
-          async (item) =>
-            await knex("orders")
-              .update({ status: "Undelivered" })
-              .where({ orderID: orderID, productID: item.productID }),
-        ),
+        undeliveredItems.map((item) => {
+          console.log(orderID, item.productID, item);
+          knex("orders")
+            .update({ status: "Undelivered" })
+            .where({ orderID: orderID, productID: item.productID });
+        }),
       );
     }
 
