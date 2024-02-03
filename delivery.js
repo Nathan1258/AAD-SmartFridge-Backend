@@ -172,7 +172,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
           .where({ orderID: orderID, productID: item.productID })
           .then((result) =>
             console.log(
-              `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to delivered`,
+              `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to delivered. Database response: ${result}`,
             ),
           )
           .catch((error) =>
@@ -189,7 +189,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
             .where({ orderID: orderID, productID: item.productID })
             .then((result) =>
               console.log(
-                `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to undelivered`,
+                `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to undelivered. Database response: ${result}`,
               ),
             )
             .catch((error) =>
