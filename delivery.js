@@ -172,7 +172,8 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
         deliveredItems.forEach((product) => {
           const updatePromise = trx("orders")
             .update({ status: "Delivered" })
-            .where({ orderID: orderID, productID: product.productID });
+            .where({ orderID: orderID, productID: product.productID })
+            .then((rows) => console.log(`Rows affected ${rows}`));
           updates.push(updatePromise);
         });
 
@@ -180,7 +181,8 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
           undeliveredItems.forEach((product) => {
             const updatePromise = trx("orders")
               .update({ status: "Undelivered" })
-              .where({ orderID: orderID, productID: product.productID });
+              .where({ orderID: orderID, productID: product.productID })
+              .then((rows) => console.log(`Rows affected ${rows}`));
             updates.push(updatePromise);
           });
         }
@@ -195,7 +197,8 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
             deliveryNotes: deliveryNotes,
             isDelivered: true,
           })
-          .where("deliveryID", deliveryID);
+          .where("deliveryID", deliveryID)
+          .then((rows) => console.log(`Rows affected ${rows}`));
 
         await trx.commit();
 
