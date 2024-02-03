@@ -246,6 +246,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
 });
 
 const updateDeliveredItem = async (orderID, productID) => {
+  console.log(`Updating orderID: ${orderID}, productID: ${productID}`);
   return knex("orders")
     .update({ status: "Delivered" })
     .where({
