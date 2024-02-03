@@ -164,6 +164,8 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     );
   }
 
+  console.log(`ORDER ID: ${orderID}`);
+
   for (const product of deliveredItems) {
     await updateDeliveredItem(orderID, product.productID);
   }
