@@ -85,9 +85,9 @@ cron.schedule("0 */12 * * *", async () => {
 router.post("/", verify, async (req, res) => {
   return knex("deliveries")
     .select("*")
+    .orderBy("deliveryDate", "asc")
     .then((deliveries) => {
-      console.log(deliveries);
-      if (deliveries.count > 0) {
+      if (deliveries.length > 0) {
         return OKResponse(res, "All deliveries returned", deliveries);
       }
       return OKResponse(res, "No deliveries available", []);
