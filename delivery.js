@@ -157,8 +157,6 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     deliveryNotes,
   } = req.body;
 
-  console.log("YAY");
-
   if (!deliveredItems) {
     return MalformedBodyResponse(
       res,
@@ -166,17 +164,12 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     );
   }
 
-  console.log("YAY2");
-  console.log(deliveryID);
-  console.log(orderID);
-  console.log(deliveryNotes);
-  console.log(deliveredItems);
-  console.log(undeliveredItems);
-
   try {
     await Promise.all(
       deliveredItems.map((item) => {
-        console.log(orderID, item.productID, item);
+        console.log(
+          `Processing item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to delivered`,
+        );
         knex("orders")
           .update({ status: "Delivered" })
           .where({ orderID: orderID, productID: item.productID });
@@ -185,6 +178,9 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     if (undeliveredItems && undeliveredItems.length > 0) {
       await Promise.all(
         undeliveredItems.map((item) => {
+          console.log(
+            `Processing item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to undelivered`,
+          );
           console.log(orderID, item.productID, item);
           knex("orders")
             .update({ status: "Undelivered" })
