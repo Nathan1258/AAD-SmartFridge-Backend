@@ -166,26 +166,36 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
 
   try {
     await Promise.all(
-      deliveredItems.map((item) => {
-        console.log(
-          `Processing item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to delivered`,
-        );
+      deliveredItems.map((item) =>
         knex("orders")
           .update({ status: "Delivered" })
-          .where({ orderID: orderID, productID: item.productID });
-      }),
+          .where({ orderID: orderID, productID: item.productID })
+          .then((result) =>
+            console.log(
+              `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to delivered`,
+            ),
+          )
+          .catch((error) =>
+            console.error(`Error processing item ${item.Name}: `, error),
+          ),
+      ),
     );
+
     if (undeliveredItems && undeliveredItems.length > 0) {
       await Promise.all(
-        undeliveredItems.map((item) => {
-          console.log(
-            `Processing item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to undelivered`,
-          );
-          console.log(orderID, item.productID, item);
+        undeliveredItems.map((item) =>
           knex("orders")
             .update({ status: "Undelivered" })
-            .where({ orderID: orderID, productID: item.productID });
-        }),
+            .where({ orderID: orderID, productID: item.productID })
+            .then((result) =>
+              console.log(
+                `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to undelivered`,
+              ),
+            )
+            .catch((error) =>
+              console.error(`Error processing item ${item.Name}: `, error),
+            ),
+        ),
       );
     }
 
@@ -198,6 +208,7 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
         isDelivered: true,
       })
       .where("deliveryID", deliveryID)
+      .then((result) => console.log("Delivery updated successfully."))
       .catch((error) => {
         console.error("Error updating delivery: ", error);
       });
