@@ -164,66 +164,70 @@ router.post("/delivered", verifyDelivery, async (req, res) => {
     );
   }
 
-  try {
-    await Promise.all(
-      deliveredItems.map((item) =>
-        knex("orders")
-          .update({ status: "Delivered" })
-          .where({ orderID: orderID, productID: item.productID })
-          .then((result) =>
-            console.log(
-              `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to delivered. Database response: ${result}`,
-            ),
-          )
-          .catch((error) =>
-            console.error(`Error processing item ${item.Name}: `, error),
-          ),
-      ),
-    );
+  return knex
+    .transaction(async (trx) => {
+      try {
+        const updates = [];
 
-    if (undeliveredItems && undeliveredItems.length > 0) {
-      await Promise.all(
-        undeliveredItems.map((item) =>
-          knex("orders")
-            .update({ status: "Undelivered" })
-            .where({ orderID: orderID, productID: item.productID })
-            .then((result) =>
-              console.log(
-                `Processed item ${item.Name} for orderID: ${orderID} and deliveryID: ${deliveryID}. Setting status to undelivered. Database response: ${result}`,
-              ),
-            )
-            .catch((error) =>
-              console.error(`Error processing item ${item.Name}: `, error),
-            ),
-        ),
+        deliveredItems.forEach((product) => {
+          const updatePromise = trx("orders")
+            .update({ status: "Delivered" })
+            .where({ orderID: orderID, productID: product.productID });
+          updates.push(updatePromise);
+        });
+
+        if (undeliveredItems && undeliveredItems.length > 0) {
+          undeliveredItems.forEach((product) => {
+            const updatePromise = trx("orders")
+              .update({ status: "Undelivered" })
+              .where({ orderID: orderID, productID: product.productID });
+            updates.push(updatePromise);
+          });
+        }
+
+        await Promise.all(updates);
+
+        await trx("deliveries")
+          .update({
+            accessCode: null,
+            itemsUndelivered: undeliveredItems.length,
+            status: "Delivered",
+            deliveryNotes: deliveryNotes,
+            isDelivered: true,
+          })
+          .where("deliveryID", deliveryID);
+
+        await trx.commit();
+
+        await addToActivityLogNoReq(
+          `Order ${orderID} has been marked as delivered`,
+        );
+        console.log(
+          "Delivery and orders updated successfully, and logged to activity log.",
+        );
+        return OKResponse(res, "Order has successfully been updated");
+      } catch (error) {
+        await trx.rollback();
+        await addToActivityLogNoReq(
+          `Order ${orderID} has had an error in processing. Please contact your admin for more information`,
+        );
+        console.error(
+          "Transaction failed, rolled back, and logged error to activity log: ",
+          error,
+        );
+        return InternalServerErrorResponse(
+          res,
+          "Order could not be updated. Please try again later.",
+        );
+      }
+    })
+    .catch((error) => {
+      console.error("An unexpected error occurred: ", error);
+      return InternalServerErrorResponse(
+        res,
+        "Order could not be updated. Please try again later.",
       );
-    }
-
-    await knex("deliveries")
-      .update({
-        accessCode: null,
-        itemsUndelivered: undeliveredItems.length,
-        status: "Delivered",
-        deliveryNotes: deliveryNotes,
-        isDelivered: true,
-      })
-      .where("deliveryID", deliveryID)
-      .then((result) => console.log("Delivery updated successfully."))
-      .catch((error) => {
-        console.error("Error updating delivery: ", error);
-      });
-
-    await addToActivityLogNoReq(
-      `Order ${orderID} has been marked as delivered`,
-    );
-    return OKResponse(res, "Order statuses successfully updated.");
-  } catch (error) {
-    console.error("Error updating order statuses", error);
-    return InternalServerErrorResponse(
-      res,
-      "Unable to update order statuses. Please try again later.",
-    );
-  }
+    });
 });
 
 router.post("/order", verify, async (req, res) => {
@@ -362,6 +366,7 @@ router.post("/add", verifyAdmin, async (req, res) => {
         );
       })
       .catch((error) => {
+        console.error("Error adding item:", error);
         return InternalServerErrorResponse(
           res,
           "An error occurred while adding products to this week's order. Please try again later.",
