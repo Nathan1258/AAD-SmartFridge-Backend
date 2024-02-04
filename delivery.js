@@ -513,19 +513,14 @@ router.post("/finalise", verifyAdmin, async (req, res) => {
         .select("productID", "quantity")
         .where({ orderID: orderID, status: "Delivered" });
 
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 4);
-
-      const expiryTimestamp = convertToTimestamp(
-        `${expiryDate.getDate()}-${expiryDate.getMonth() + 1}-${expiryDate.getFullYear()}`,
-      );
+      const expiryDate = addDaysToDate(new Date(), 4);
 
       for (let product of products) {
         await knex("inventory")
           .insert({
             itemId: product.productID,
             quantity: product.quantity,
-            expiryDate: expiryTimestamp,
+            expiryDate: formatForMySQL(expiryDate),
           })
           .onConflict("itemId")
           .merge({ quantity: knex.raw("quantity + ?", [product.quantity]) });
@@ -611,13 +606,14 @@ async function isValidProductsArray(products) {
   return { valid: true, message: "" };
 }
 
-function convertToTimestamp(dateStr) {
-  const [day, month, year] = dateStr.split("-");
-  return new Date(
-    parseInt(year, 10),
-    parseInt(month, 10) - 1,
-    parseInt(day, 10),
-  ).toISOString();
+function addDaysToDate(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function formatForMySQL(date) {
+  return date.toISOString().slice(0, 19).replace("T", " ");
 }
 
 function getWeekNumber(d) {
