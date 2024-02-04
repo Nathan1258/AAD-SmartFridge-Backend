@@ -16,59 +16,18 @@ const {
 
 // Scheduled stock analysis and order creation every Monday at 8AM
 cron.schedule("0 8 * * 1", async () => {
-  console.log("Running the Delivery flow task");
-
-  // Get last week's order ID and process the delivery
   const lastWeekOrderID = generateOrderID(1);
   if ((await processDelivery(lastWeekOrderID)) === true) {
-    console.log("Delivery: " + lastWeekOrderID + " has processed successfully");
     await addToActivityLogNoReq(
       "Last week's order has been processed for delivery.",
     );
   } else {
-    console.log(
-      "Delivery: " +
-        lastWeekOrderID +
-        " has not processed successfully. Check logs",
-    );
     await addToActivityLogNoReq(
       "Could not process last week's delivery. Contact your admin.",
     );
   }
-
-  // Generate new orderID for this week
   const newOrderID = generateOrderID();
   await processLowQuantityProducts(newOrderID);
-
-  // Show admin a list of all items expiring soon. They should check all products they want reordering and this will hit
-  // a new endpoint that adds the product to this week's order.
-
-  // Step 3: Delivery Driver Logs into Fridge
-  //     - Driver uses the one-time code to access the fridge
-  //     - The system invalidates the code upon successful login
-
-  // This step is performed by the delivery driver, not by the system
-
-  // Step 4: Driver Updates Order Status
-  //     - Driver checks off items successfully replenished
-  //     - System updates the order status based on driver's input
-  //     - Unchecked items are noted for the head chef's review
-
-  // updateOrderStatus();
-
-  // Step 5: Post-Delivery Confirmation
-  //     - Confirm the items not replenished
-  //     - Head chef reviews and decides on actions for next order
-
-  // confirmDeliveryAndReview();
-
-  // Step 6: Complete Delivery Flow
-  //     - Finalize the order and delivery details in the system
-  //     - Prepare for next week's order and delivery cycle
-
-  // finalizeDelivery();
-
-  // Note: Ensure that you have error handling and logging in place for each step
 });
 
 // Run a task every 12 hours to process items near out of stock and automatically add to order
@@ -506,7 +465,7 @@ router.post("/finalise", verifyAdmin, async (req, res) => {
 
     if (order.isDelivered) {
       await knex("deliveries")
-        .update({ isChecked: 1 })
+        .update({ isChecked: 1, status: "Completed" })
         .where("orderID", orderID);
 
       const products = await knex("orders")
@@ -526,6 +485,9 @@ router.post("/finalise", verifyAdmin, async (req, res) => {
           .merge({ quantity: knex.raw("quantity + ?", [product.quantity]) });
       }
 
+      await addToActivityLogNoReq(
+        `Order ${orderID} has been completed and items have been added to Fridge's inventory`,
+      );
       return OKResponse(
         res,
         "Order finalised and checked. Inventory updated successfully.",
