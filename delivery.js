@@ -483,6 +483,84 @@ router.post("/edit", verifyAdmin, async (req, res) => {
     });
 });
 
+const express = require("express");
+const router = express.Router();
+const knex = require("knex")(/* your database configuration */);
+const {
+  verifyAdmin,
+  MalformedBodyResponse,
+  NotFoundResponse,
+  OKResponse,
+  InternalServerErrorResponse,
+} = require("/* your response handlers */");
+
+router.post("/finalise", verifyAdmin, async (req, res) => {
+  const orderID = req.body.orderID;
+
+  if (!orderID) {
+    return MalformedBodyResponse(
+      res,
+      "'orderID' is missing from the request body",
+    );
+  }
+
+  try {
+    const orders = await knex("deliveries")
+      .select("*")
+      .where("orderID", orderID);
+
+    if (orders.length === 0) {
+      return NotFoundResponse(res, "Order was not found");
+    }
+
+    const order = orders[0];
+
+    if (order.isDelivered) {
+      await knex("deliveries")
+        .update({ isChecked: 1 })
+        .where("orderID", orderID);
+
+      const products = await knex("orders")
+        .select("productID", "quantity")
+        .where({ orderID: orderID, status: "Delivered" });
+
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 4);
+
+      const expiryTimestamp = convertToTimestamp(
+        `${expiryDate.getDate()}-${expiryDate.getMonth() + 1}-${expiryDate.getFullYear()}`,
+      );
+
+      for (let product of products) {
+        await knex("inventory")
+          .insert({
+            itemId: product.productID,
+            quantity: product.quantity,
+            expiryDate: expiryTimestamp,
+          })
+          .onConflict("itemId")
+          .merge({ quantity: knex.raw("quantity + ?", [product.quantity]) });
+      }
+
+      return OKResponse(
+        res,
+        "Order finalised and checked. Inventory updated successfully.",
+      );
+    } else {
+      return MalformedBodyResponse(
+        res,
+        "Order cannot be finalised as it has not been delivered yet.",
+      );
+    }
+  } catch (error) {
+    console.error("Error finalising order:", error);
+    return InternalServerErrorResponse(
+      res,
+      "Could not finalise the order. Please try again.",
+    );
+  }
+});
+
 module.exports = router;
 
 async function isValidProductsArray(products) {
@@ -542,6 +620,15 @@ async function isValidProductsArray(products) {
     }
   }
   return { valid: true, message: "" };
+}
+
+function convertToTimestamp(dateStr) {
+  const [day, month, year] = dateStr.split("-");
+  return new Date(
+    parseInt(year, 10),
+    parseInt(month, 10) - 1,
+    parseInt(day, 10),
+  ).toISOString();
 }
 
 function getWeekNumber(d) {
@@ -704,6 +791,22 @@ function isProductValid(productID) {
     .catch((error) => {
       console.log("Could not check if product is valid", error);
     });
+}
+
+async function updateInventory(itemID, quantity, expiryDate) {
+  const expiryDateFormat = /^\d{2}-\d{2}-\d{2}$/;
+  if (!expiryDateFormat.test(expiryDate)) {
+    throw new Error("'expiryDate' must be in DD-MM-YY format");
+  }
+
+  await knex("inventory")
+    .insert({
+      itemId: itemID,
+      quantity: quantity,
+      expiryDate: convertToTimestamp(expiryDate),
+    })
+    .onConflict("itemId")
+    .merge({ quantity: knex.raw("quantity + VALUES(quantity)") });
 }
 
 function isProductInOrder(productID, orderID) {
