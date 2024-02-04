@@ -70,11 +70,6 @@ endpoint [here](https://aad-api.ellisn.com)
 
 ### Reports
 
-- **Generate a report:** `/v1/reports/generate`
-    - **Method:** GET
-    - **Description:** Generate a report.
-    - **Permissions:** Requires health and safety privileges.
-
 - **Log an action:** `/v1/reports/log-action`
     - **Method:** POST
     - **Description:** Logs an action to the activity log. If *uid* is not present then the current user performing the
@@ -149,7 +144,7 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Parameters:**
         - *accessPIN*: **integer**
 
-- **Add a note to the delivery:** `/v1/delivery/verify`
+- **Add a note to the delivery:** `/v1/delivery/note`
     - **Method:** POST
     - **Description:** Updates the note of the delivery
     - **Parameters:**
@@ -168,6 +163,13 @@ endpoint [here](https://aad-api.ellisn.com)
     - **Parameters:**
         - *accessPIN*: **integer**
         - (Optional) *orderID*: **integer**
+
+- **Get current week's order:** `/v1/delivery/final-order`
+    - **Method:** POST
+    - **Description:** Returns an array of products that are in the given week's order.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - *orderID*: **integer**
 
 - **Add a product to this week's order:** `/v1/delivery/add`
     - **Method:** POST
@@ -197,6 +199,16 @@ endpoint [here](https://aad-api.ellisn.com)
         - *accessPIN*: **integer**
         - *productID*: **integer**
         - *quantity*: **integer**
+
+- **Finalise an order and its delivery:** `/v1/delivery/finalise`
+    - **Method:** POST
+    - **Description:** Finalises a delivery/order and marks it as complete. Will only work if the delivery is marked
+      as 'delivered'. This allows to check what items the delivery driver has inserted before adding the products to the
+      inventory
+    - **Permissions:** Requires admin privileges.
+    - **Parameters:**
+        - *accessPIN*: **integer**
+        - *orderID*: **integer**
 
 ## User Verification Functions
 

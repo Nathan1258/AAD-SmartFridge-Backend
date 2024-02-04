@@ -29,7 +29,6 @@ cron.schedule("0 8 * * 1", async () => {
   const newOrderID = generateOrderID();
   await processLowQuantityProducts(newOrderID);
 });
-
 // Run a task every 12 hours to process items near out of stock and automatically add to order
 cron.schedule("0 */12 * * *", async () => {
   console.log("Processing products near depletion");
@@ -40,7 +39,6 @@ cron.schedule("0 */12 * * *", async () => {
   await processExpiredItems();
   console.log("Removed items that have expired");
 });
-
 router.post("/", verify, async (req, res) => {
   return knex("deliveries")
     .select("*")
@@ -59,7 +57,6 @@ router.post("/", verify, async (req, res) => {
       );
     });
 });
-
 router.post("/verify", verifyDelivery, async (req, res) => {
   const deliveryID = req.body.delivery.deliveryID;
 
@@ -77,7 +74,6 @@ router.post("/verify", verifyDelivery, async (req, res) => {
     });
   return OKResponse(res, "Delivery data has been returned", req.body.delivery);
 });
-
 router.post("/note", verifyDelivery, async (req, res) => {
   const deliveryNote = req.body.note;
   const deliveryID = req.body.delivery.deliveryID;
