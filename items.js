@@ -109,6 +109,7 @@ router.post("/insert", verify, async (req, res) => {
       );
     });
 });
+
 router.post("/remove", verify, async (req, res) => {
   const { itemID, quantity } = req.body;
 

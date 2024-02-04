@@ -483,17 +483,6 @@ router.post("/edit", verifyAdmin, async (req, res) => {
     });
 });
 
-const express = require("express");
-const router = express.Router();
-const knex = require("knex")(/* your database configuration */);
-const {
-  verifyAdmin,
-  MalformedBodyResponse,
-  NotFoundResponse,
-  OKResponse,
-  InternalServerErrorResponse,
-} = require("/* your response handlers */");
-
 router.post("/finalise", verifyAdmin, async (req, res) => {
   const orderID = req.body.orderID;
 
