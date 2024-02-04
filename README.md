@@ -146,7 +146,7 @@ endpoint [here](https://aad-api.ellisn.com)
 
 - **Add a note to the delivery:** `/v1/delivery/note`
     - **Method:** POST
-    - **Description:** Updates the note of the delivery
+    - **Description:** Updates the note of the delivery. Need delivery driver's accessCode to be entered as the PIN.
     - **Parameters:**
         - *accessPIN*: **integer**
         - *note*: **string**
