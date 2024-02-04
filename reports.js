@@ -59,8 +59,4 @@ router.post("/fetch/logs", verifyAdmin, async (req, res) => {
   }
 });
 
-router.get("/generate", verifyHealth, (req, res) => {
-  return res.send("Return generated report");
-});
-
 module.exports = router;
