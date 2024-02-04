@@ -349,7 +349,7 @@ router.post("/add", verifyAdmin, async (req, res) => {
           productID: product.itemID,
           quantity: product.quantity,
           orderedAt: getCurrentTimestamp(),
-          status: "Processing",
+          status: "Ordered",
           triggerType: "User added" + endpoint,
         })
         .then((row) => {
