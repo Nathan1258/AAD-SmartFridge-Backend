@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { verifyAdmin, verifyHealth } = require("./verify");
+const { verifyAdmin } = require("./verify");
 const {
   MalformedBodyResponse,
   InternalServerErrorResponse,

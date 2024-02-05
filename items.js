@@ -102,7 +102,7 @@ router.post("/insert", verify, async (req, res) => {
       return OKResponse(res, "Inventory updated successfully");
     })
     .catch((error) => {
-      console.error(err);
+      console.error(error);
       return InternalServerErrorResponse(
         res,
         "Could not update Inventory. Please try again.",
@@ -139,7 +139,7 @@ router.post("/remove", verify, async (req, res) => {
       return OKResponse(res, "Inventory updated successfully");
     })
     .catch((error) => {
-      console.error(err);
+      console.error(error);
       return InternalServerErrorResponse(
         res,
         "Could not update Inventory. Please try again.",

@@ -112,11 +112,6 @@ router.post("/clock-in", async (req, res) => {
           "User session could not be created, try again later",
         );
       }
-
-      return InternalServerErrorResponse(
-        res,
-        "Unable to clock user in. Try again later.",
-      );
     })
     .catch((error) => {
       console.error("Error creating session:", error);

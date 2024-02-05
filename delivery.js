@@ -736,22 +736,6 @@ function isProductValid(productID) {
     });
 }
 
-async function updateInventory(itemID, quantity, expiryDate) {
-  const expiryDateFormat = /^\d{2}-\d{2}-\d{2}$/;
-  if (!expiryDateFormat.test(expiryDate)) {
-    throw new Error("'expiryDate' must be in DD-MM-YY format");
-  }
-
-  await knex("inventory")
-    .insert({
-      itemId: itemID,
-      quantity: quantity,
-      expiryDate: convertToTimestamp(expiryDate),
-    })
-    .onConflict("itemId")
-    .merge({ quantity: knex.raw("quantity + VALUES(quantity)") });
-}
-
 function isProductInOrder(productID, orderID) {
   return knex("orders")
     .select("*")
