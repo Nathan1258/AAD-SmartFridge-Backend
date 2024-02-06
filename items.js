@@ -7,7 +7,11 @@ const {
   NotFoundResponse,
   MalformedBodyResponse,
 } = require("./customResponses");
-const { convertToTimestamp } = require("./Utils");
+const {
+  convertToTimestamp,
+  addToActivityLog,
+  addToActivityLogNoReq,
+} = require("./Utils");
 
 router.post("/", verify, (req, res) => {
   let DBQUERY;
@@ -92,11 +96,21 @@ router.post("/insert", verify, async (req, res) => {
     })
     .onConflict("itemId")
     .merge({ quantity: knex.raw("quantity + VALUES(quantity)") })
-    .then((result) => {
+    .then(async (result) => {
       if (result.length === 0) {
         return InternalServerErrorResponse(
           res,
           "Could not update inventory with selected item: " + itemID,
+        );
+      }
+      if (!req.body.user.uid) {
+        await addToActivityLogNoReq(
+          `${quantity} of product: ${itemID} has been inserted in the fridge`,
+        );
+      } else {
+        await addToActivityLog(
+          req,
+          `User: ${req.body.user.uid} has inserted ${quantity} of product: ${itemID} in the fridge`,
         );
       }
       return OKResponse(res, "Inventory updated successfully");
@@ -129,11 +143,21 @@ router.post("/remove", verify, async (req, res) => {
       quantity: knex.raw("GREATEST(quantity - ?, 0)", [quantity]),
     })
     .where("itemId", itemID)
-    .then((rows) => {
+    .then(async (rows) => {
       if (rows <= 0) {
         return NotFoundResponse(
           res,
           "Item not found or quantity is already zero.",
+        );
+      }
+      if (!req.body.user.uid) {
+        await addToActivityLogNoReq(
+          `${quantity} of product: ${itemID} has been removed from the fridge`,
+        );
+      } else {
+        await addToActivityLog(
+          req,
+          `User: ${req.body.user.uid} has removed ${quantity} of product: ${itemID}`,
         );
       }
       return OKResponse(res, "Inventory updated successfully");
